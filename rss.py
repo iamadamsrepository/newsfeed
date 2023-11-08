@@ -12,6 +12,7 @@ class RSSEntry:
     summary: str
     article_url: str
     # TODO image_url: str
+    # TODO rss_url: str
     timestamp: dt.datetime
 
 
@@ -24,7 +25,7 @@ class RSSFeeds:
         self.parse_entries()
 
     def parse_entries(self):
-        self.entries = []
+        self.entries: List[RSSEntry] = []
         for feed in self.feeds:
             feed_title = feed['feed']['title']
             for entry in feed['entries'][:self.max_entries_per_feed]:
