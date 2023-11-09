@@ -32,11 +32,16 @@ class RSSFeeds:
                 if entry['title_detail']['type'] != 'text/plain':
                     raise ValueError()
                 title = entry['title']
-                if entry['summary_detail']['type'] != 'text/html':
+                if 'summary_detail' not in entry:
+                    summary = None
+                elif entry['summary_detail']['type'] != 'text/html':
                     raise ValueError()
-                summary = entry['summary']
+                else:
+                    summary = entry['summary']
                 article_url = entry['link']
-                timestamp = dt.datetime.fromtimestamp(mktime(entry['published_parsed']))
+                entry: dict
+                time_struct = entry.get('published_parsed', entry['updated_parsed'])
+                timestamp = dt.datetime.fromtimestamp(mktime(time_struct))
                 self.entries.append(RSSEntry(feed_title, title, summary, article_url, timestamp))
        
 
@@ -45,5 +50,8 @@ urls = [
     "https://www.smh.com.au/rss/world.xml",
     "https://www.aljazeera.com/xml/rss/all.xml",
     "https://feeds.skynews.com/feeds/rss/world.xml",
-    "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
+    "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+    "https://www.sbs.com.au/news/topic/world/feed",
+    "http://rss.dw.com/rdf/rss-en-world",
+    "http://rss.cnn.com/rss/edition_world.rss"
 ]
