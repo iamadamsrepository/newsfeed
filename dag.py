@@ -60,7 +60,7 @@ with DAG(
         single_feed_config = config.copy()
         single_feed_config['rss'] = {feed: url}
         pull_articles_tasks.append(
-            PythonOperator(task_id=f'pull_{feed.replace(" ", "_")}', python_callable=scraper.pull_articles, op_args=[config])
+            PythonOperator(task_id=f'pull_{feed.replace(" ", "_")}', python_callable=scraper.pull_articles, op_args=[single_feed_config])
         )
     # embed_articles_task = embed_articles(config['db'], client)
     # summarise_articles_task = summarise_articles(config['db'], client)
