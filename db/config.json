@@ -1,0 +1,9 @@
+{
+    "db": {
+        "user": "postgres",
+        "password": "postgres",
+        "host": "news-db.cdwfvnatcuqz.ap-southeast-2.rds.amazonaws.com",
+        "port": 5432,
+        "database": "news-db"
+    }
+}
