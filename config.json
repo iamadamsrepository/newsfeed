@@ -11,7 +11,8 @@
         "user": "postgres",
         "password": "postgres",
         "host": "news-db.cdwfvnatcuqz.ap-southeast-2.rds.amazonaws.com",
-        "port": 5432
+        "port": 5432,
+        "database": "news"
     },
     "rss": {
         "ABCUS Top": "https://abcnews.go.com/abcnews/topstories",

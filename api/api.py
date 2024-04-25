@@ -19,7 +19,11 @@ class ClusterDBOut:
     a_ts: dt.datetime
     a_feed: str
     a_title: str
+    a_subtitle: str
     a_url: str
+    p_name: str
+    p_url: str
+    p_favicon_url: str
 
 
 @dataclass
@@ -28,7 +32,11 @@ class Article:
     ts: dt.datetime
     feed: str
     title: str
+    subtitle: str
     url: str
+    provider: str
+    provider_url: str
+    provider_favicon: str
 
 
 @dataclass
@@ -55,20 +63,25 @@ app.add_middleware(
 
 @app.get("/stories")
 async def stories():
-    db_config = json.load(open("./config.json"))["db"]
+    db_config = json.load(open("./config.json"))["aws_db"]
     db = DBHandler(db_config)
     db_out = [ClusterDBOut(*i) for i in db.run_sql("""
         select c.id, c.ts, c.title, c.summary, 
-        a.id, a.ts, a.feed, a.title, a.url
+        a.id, a.ts, a.feed, a.title, a.subtitle, a.url,
+        p.name, p.url, p.favicon_url
         from cluster_articles ca
         left join clusters c
         on ca.cluster_id = c.id
         left join articles a
         on ca.article_id = a.id
+        left join feeds f
+        on a.feed = f.name
+        left join providers p
+        on f.provider_id = p.id
     """)]
     clusters_dict: Dict[int, Cluster] = {}
     for c in db_out:
-        article = Article(*list(asdict(c).values())[-5:])
+        article = Article(*list(asdict(c).values())[-9:])
         if c.c_id in clusters_dict:
             clusters_dict[c.c_id].articles.append(article)
         else:

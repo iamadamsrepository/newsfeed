@@ -1,6 +1,6 @@
 import json
 from db_connection import DBHandler
-
+import pandas as pd
 
 def main():
     config = json.load(open("./db/config.json"))["db"]
@@ -48,11 +48,39 @@ def main():
             constraint fk_article_id foreign key (article_id) references articles(id)
         )
     """
+    create_providers_table = """
+        create table if not exists providers (
+            id serial not null primary key,
+            name text not null,
+            url text not null,
+            favicon_url text not null,
+            scrape boolean not null default false,
+            scraper text
+        )
+    """
+    create_feeds_table = """
+        create table if not exists feeds (
+            name text not null,
+            provider_id int not null,
+            url text not null,
+            category text not null,
+            constraint fk_provider_id foreign key (provider_id) references providers(id)
+        )
+    """
     db.run_sql_no_return(create_articles_table)
     db.run_sql_no_return(create_embeddings_table)
     db.run_sql_no_return(create_article_summaries_table)
     db.run_sql_no_return(create_clusters_table)
     db.run_sql_no_return(create_cluster_articles_table)
+    db.run_sql_no_return(create_providers_table)
+    db.run_sql_no_return(create_feeds_table)
+    # providers = pd.read_csv('./db/providers.csv')
+    # for _, row in providers.iterrows():
+    #     db.insert_row("providers", dict(row))
+    # feeds = pd.read_csv('./db/feeds.csv')
+    # for _, row in feeds.iterrows():
+    #     db.insert_row("feeds", dict(row))
+    ...
 
 
 if __name__ == "__main__":
