@@ -1,5 +1,6 @@
 from functools import cached_property
 import json
+import math
 from typing import Dict, List, Tuple, TypeAlias, Union
 import numpy as np
 from openai import OpenAI
@@ -13,15 +14,15 @@ import datetime as dt
 from db.db_connection import DBHandler
 
 
-ArticleInfo = namedtuple("Info", ["id", "ts", "title", "embedding", "summary"])
+ArticleInfo = namedtuple("ArticleInfo", ["id", "ts", "title", "subtitle", "feed", "embedding", "summary"])
 
 class Cluster:
     def __init__(self, child_1, child_2, distance: float, total_articles: int) -> None:
-        self.leafs: List[Union[Cluster, ArticleInfo]] = [child_1, child_2]
+        self.branches: List[Union[Cluster, ArticleInfo]] = [child_1, child_2]
         self.distance: float = distance
         self.total_articles: int = total_articles
         self.parent: Cluster = None
-        for c in filter(lambda l: isinstance(l, Cluster), self.leafs):
+        for c in filter(lambda l: isinstance(l, Cluster), self.branches):
             c.parent = self
         self.sub_clusters: list = None
         self.headline: str = None
@@ -30,11 +31,11 @@ class Cluster:
     @cached_property
     def articles(self) -> List[ArticleInfo]:
         articles = []
-        for leaf in self.leafs:
-            if isinstance(leaf, ArticleInfo):
-                articles.append(leaf)
+        for b in self.branches:
+            if isinstance(b, ArticleInfo):
+                articles.append(b)
             else:
-                articles += leaf.articles
+                articles += b.articles
         assert len(articles) == self.total_articles
         return articles
     
@@ -42,11 +43,30 @@ class Cluster:
     def titles(self) -> List[str]:
         return [a.title for a in self.articles]
     
+    def print_articles(self):
+        if self.headline:
+            raise NotImplementedError
+        else:
+            for a in self.articles:
+                print(" - ", a.feed, " - ", a.title)
+            print(f"{self.score:.3f}")
+            print("Parent: ", self.parent)
+            for a in self.parent.articles:
+                print(" - ", a.feed, " - ", a.title)
+            if self.parent.parent:
+                print(f"{self.parent.score:.3f}")
+            else:
+                print('no grandparent')
+            print('\n')
+    
     @property
     def score(self) -> float:
-        if self.parent:
-            return self.parent.distance / self.distance
-        return -1
+        # No need to keep a cluster of entire input
+        if not self.parent: 
+            return -1
+
+        return self.parent.distance / self.distance / math.sqrt(self.total_articles)
+
     
     @property
     def db_dict(self) -> dict:
@@ -147,20 +167,26 @@ def get_cluster_headline_and_summary(cluster: Cluster, client: OpenAI, retries=0
     obj = json.loads(response.choices[0].message.tool_calls[0].function.arguments)
     return obj['headline'], obj['summary']
 
-def cluster_articles(db_config: dict, client: OpenAI):
+def cluster_articles(db_config: dict, client: OpenAI, dry_run=False):
     db = DBHandler(db_config)
     sql_out = db.run_sql("""
-        select a.id, a.ts, a.title, e.embedding, s.summary
+        select a.id, a.ts, a.title, a.subtitle, a.feed, 
+        e.embedding, s.summary
         from articles a
         left join embeddings e 
         on a.id = e.article_id
         left join article_summaries s
         on a.id = s.article_id
     """)
-    articles = [ArticleInfo(a[0], a[1], a[2], eval(a[3]), a[4]) for a in sql_out]
+    articles = [ArticleInfo(a[0], a[1], a[2], a[3], a[4], eval(a[5]), a[6]) for a in sql_out]
     dist_matrix = make_distance_matrix([a.embedding for a in articles])
     all_clusters = make_cluster_map(articles, dist_matrix, with_plt=False)
     clusters: List[Cluster] = filter_clusters(all_clusters)
+    if dry_run:
+        for c in clusters:
+            c.print_articles()
+        print(f"Clusters dry run finished")
+        return
     for cluster in clusters:
         cluster.headline, cluster.summary = get_cluster_headline_and_summary(cluster, client)
         db.insert_row("clusters", cluster.db_dict)
@@ -171,4 +197,6 @@ def cluster_articles(db_config: dict, client: OpenAI):
 
     
 if __name__ == '__main__':
-    cluster_articles()
+    config = json.load(open("./config.json"))
+    client = OpenAI(api_key=config['openai_api_key'])
+    cluster_articles(config['aws_db'], client, dry_run=True)

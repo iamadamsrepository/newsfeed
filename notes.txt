@@ -1,0 +1,13 @@
+TODO:
+
+1. H DONE improve clustering
+    1.1 CANCELLED Filtering
+    1.2 DONE Refine the scoring
+2. H update db to handle providers with no articles, get to 8 providers with scrapers, and 8 without
+3. update api and web to handle links straight to story page (relys on data passed from homepage)
+4. look into local news, use sydney as poc. Other categories too
+5. write 'about' page
+6. aws mwaa
+7. H figure out tz stuff, want everything in utc, then add time ago to webapp
+8. M clustering to make daily clusters
+9. M get article keywords (named entities, geographic places, people, events)

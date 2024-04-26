@@ -15,3 +15,5 @@ lambda/
 old/
 
 dags/
+
+config.json
