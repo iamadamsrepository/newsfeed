@@ -1,7 +1,0 @@
-name,provider_id,url,category
-ABCUS Top,1,https://abcnews.go.com/abcnews/topstories,top
-CBS World,2,https://www.cbsnews.com/latest/rss/world,world
-BBC World,3,http://feeds.bbci.co.uk/news/world/rss.xml,world
-CNN World,4,http://rss.cnn.com/rss/edition_world.rss,world
-SMH World,5,https://www.smh.com.au/rss/world.xml,world
-SBS World,6,https://www.sbs.com.au/news/topic/world/feed,world

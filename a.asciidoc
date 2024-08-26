@@ -1,0 +1,58 @@
+== Method
+
+=== Architecture Overview
+
+The system consists of several key components:
+
+1. **Data Scraper**: Scrapes news articles from various sources daily.
+2. **Summarization Engine**: Uses a pretrained GPT model to summarize the first few paragraphs of each article.
+3. **Embedding Generator**: Creates embeddings from the summaries.
+4. **Clustering Algorithm**: Groups articles with similar content.
+5. **Web Interface**: Displays summarized news stories with links to the full articles.
+
+[plantuml, architecture-diagram, png]
+----
+@startuml
+!define RECTANGLE Rectangle
+RECTANGLE DataScraper {
+  + daily_scrape()
+}
+
+RECTANGLE SummarizationEngine {
+  + summarize(text: String): String
+}
+
+RECTANGLE EmbeddingGenerator {
+  + generate_embedding(summary: String): Vector
+}
+
+RECTANGLE ClusteringAlgorithm {
+  + cluster(embeddings: List[Vector]): List[Cluster]
+}
+
+RECTANGLE WebInterface {
+  + display_stories(clusters: List[Cluster])
+}
+
+DataScraper --> SummarizationEngine
+SummarizationEngine --> EmbeddingGenerator
+EmbeddingGenerator --> ClusteringAlgorithm
+ClusteringAlgorithm --> WebInterface
+@enduml
+----
+
+=== Summarization
+
+The summarization engine utilizes a pretrained GPT model to condense the first few paragraphs of each article. The summarization process involves:
+- **Input**: The first few paragraphs of the article.
+- **Output**: A concise summary of the input text.
+
+```python
+from transformers import GPT2Tokenizer, GPT2Model
+
+def summarize_article(article_text):
+    tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
+    model = GPT2Model.from_pretrained('gpt2')
+    inputs = tokenizer(article_text, return_tensors='pt', max_length=512, truncation=True)
+    summary = model.generate(inputs['input_ids'], max_length=150, num_return_sequences=1)
+    return tokenizer.decode(summary[0], skip_special_tokens=True)

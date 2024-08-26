@@ -1,7 +1,24 @@
-name,url,favicon_url,scrape,scraper
-ABC (US),https://abcnews.go.com/,https://s.abcnews.com/assets/dtci/images/favicon.ico,true,ABCUSScraper
-CBS,https://www.cbsnews.com/,https://www.cbsnews.com/favicon.ico,true,CBSScraper
-The Guardian,https://www.theguardian.com/,https://www.theguardian.com/favicon.ico,true,GRDScraper
-BBC,https://www.bbc.com/news,https://www.bbc.com/favicon.ico,true,BBCScraper
-The Sydney Morning Herald,https://www.smh.com.au/,https://www.smh.com.au/favicons/smh.ico,true,SMHScraper
-SBS,https://www.sbs.com.au/,https://www.sbs.com.au/_next/static/img/common/favicon_48x48-2758304.png,true,SBSScraper
+name,url,favicon_url
+The Washington Post,https://www.washingtonpost.com/,https://www.washingtonpost.com/favicon.svg
+CNN,https://edition.cnn.com/,https://edition.cnn.com/media/sites/cnn/apple-touch-icon.png
+The Associated Press,https://www.ap.org/,https://www.ap.org/apple-touch-icon.png
+The Economist,https://www.economist.com/,https://www.economist.com/favicon.ico
+The New York Times,https://www.nytimes.com/,https://www.nytimes.com/vi-assets/static-assets/favicon-d2483f10ef688e6f89e23806b9700298.ico
+MSNBC,https://www.msnbc.com/,https://nodeassets.nbcnews.com/cdnassets/projects/ramen/favicon/msnbc/all-other-sizes-PNG.ico/favicon.ico
+Fox News,https://www.foxnews.com/,https://static.foxnews.com/static/orion/styles/img/fox-news/favicons/favicon.ico
+ABC,https://www.abc.net.au/news,https://www.abc.net.au/newsnews-web/assets/favicon-32x32.png
+The Sydney Morning Herald,https://www.smh.com.au/,https://www.smh.com.au/favicons/smh.ico
+SBS,https://www.sbs.com.au/,https://www.sbs.com.au/_next/static/img/news/favicon_48x48-1c81a55.png
+9 News,https://www.9news.com.au/,https://www.9news.com.au/assets/img/favicon.6c717b9f.svg
+The Age,https://www.theage.com.au/,https://www.theage.com.au/favicons/theage.ico
+The Guardian Australia,https://www.theguardian.com/au,https://static.guim.co.uk/images/favicon-32x32.ico
+Financial Review,https://www.afr.com/,https://www.afr.com/favicon.ico
+Sky News Australia,https://www.skynews.com.au/,https://www.skynews.com.au/wp-content/themes/newscorpau-news-dna/dist/images/apple-touch-icons/skynews-apple-touch-icon.png
+The Guardian,https://www.theguardian.com/,https://static.guim.co.uk/images/favicon-32x32.ico
+BBC,https://www.bbc.com/news,https://www.bbc.co.uk/favicon.ico
+Euronews,https://www.euronews.com/,https://www.euronews.com/apple-touch-icon.png
+Hindustan Times,https://www.hindustantimes.com/,https://www.hindustantimes.com/res/images/icons/icon-57x57.png
+DW,https://www.dw.com/en/,https://www.dw.com/images/icons/favicon-180x180.png
+The Globe and Mail,https://www.theglobeandmail.com/,https://www.theglobeandmail.com/pf/resources/assets/meta/favicon-32x32.png?d=547
+The Telegraph,https://www.telegraph.co.uk/,https://www.telegraph.co.uk/etc.clientlibs/settings/wcm/designs/telegraph/core/clientlibs/core/resources/icons/favicon.ico
+Al Jazeera,https://www.aljazeera.com/,https://www.aljazeera.com/favicon_aje.ico

@@ -14,7 +14,7 @@ import datetime as dt
 from db.db_connection import DBHandler
 
 
-ArticleInfo = namedtuple("ArticleInfo", ["id", "ts", "title", "subtitle", "feed", "embedding", "summary"])
+ArticleInfo = namedtuple("ArticleInfo", ["id", "ts", "title", "subtitle", "provider", "embedding", "summary"])
 
 class Cluster:
     def __init__(self, child_1, child_2, distance: float, total_articles: int) -> None:
@@ -48,11 +48,11 @@ class Cluster:
             raise NotImplementedError
         else:
             for a in self.articles:
-                print(" - ", a.feed, " - ", a.title)
+                print(" - ", a.provider, " - ", a.title)
             print(f"{self.score:.3f}")
             print("Parent: ", self.parent)
             for a in self.parent.articles:
-                print(" - ", a.feed, " - ", a.title)
+                print(" - ", a.provider, " - ", a.title)
             if self.parent.parent:
                 print(f"{self.parent.score:.3f}")
             else:
@@ -65,7 +65,7 @@ class Cluster:
         if not self.parent: 
             return -1
 
-        return self.parent.distance / self.distance / math.sqrt(self.total_articles)
+        return self.parent.distance / self.distance / (self.total_articles ** (1/3))
 
     
     @property
@@ -170,13 +170,15 @@ def get_cluster_headline_and_summary(cluster: Cluster, client: OpenAI, retries=0
 def cluster_articles(db_config: dict, client: OpenAI, dry_run=False):
     db = DBHandler(db_config)
     sql_out = db.run_sql("""
-        select a.id, a.ts, a.title, a.subtitle, a.feed, 
+        select a.id, a.ts, a.title, a.subtitle, p.name, 
         e.embedding, s.summary
         from articles a
         left join embeddings e 
         on a.id = e.article_id
         left join article_summaries s
         on a.id = s.article_id
+        left join providers p
+        on a.provider_id = p.id
     """)
     articles = [ArticleInfo(a[0], a[1], a[2], a[3], a[4], eval(a[5]), a[6]) for a in sql_out]
     dist_matrix = make_distance_matrix([a.embedding for a in articles])
@@ -189,14 +191,14 @@ def cluster_articles(db_config: dict, client: OpenAI, dry_run=False):
         return
     for cluster in clusters:
         cluster.headline, cluster.summary = get_cluster_headline_and_summary(cluster, client)
-        db.insert_row("clusters", cluster.db_dict)
-        cluster_id = db.run_sql("select max(id) from clusters")[0][0]
+        db.insert_row("stories", cluster.db_dict)
+        cluster_id = db.run_sql("select max(id) from stories")[0][0]
         for article in cluster.articles:
-            db.insert_row("cluster_articles", {"cluster_id": cluster_id, "article_id": article.id})
-        print(f"Wrote cluster {cluster.headline} from {cluster.total_articles} articles")
+            db.insert_row("story_articles", {"story_id": cluster_id, "article_id": article.id})
+        print(f"Wrote story {cluster.headline} from {cluster.total_articles} articles")
 
     
 if __name__ == '__main__':
     config = json.load(open("./config.json"))
     client = OpenAI(api_key=config['openai_api_key'])
-    cluster_articles(config['aws_db'], client, dry_run=True)
+    cluster_articles(config['db'], client, dry_run=False)

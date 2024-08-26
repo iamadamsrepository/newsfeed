@@ -9,7 +9,7 @@ def get_embedding(text, client: OpenAI, model="text-embedding-3-large"):
    return client.embeddings.create(input=[text], model=model).data[0].embedding
 
 def get_article_embedding(article: ArticleRow, client: OpenAI):
-    return get_embedding(article.article, client)
+    return get_embedding(' '.join(article.body.split()[:600]), client)
 
 def embed_articles(db_config: dict, client: OpenAI):
     db = DBHandler(db_config)

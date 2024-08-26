@@ -1,25 +1,17 @@
 {
-
     "db": {
-        "user": "trading_db",
-        "password": "trading_db",
-        "host": "127.0.0.1",
-        "port": 5432,
-        "database": "news"
-    },
-    "aws_db": {
         "user": "postgres",
         "password": "postgres",
-        "host": "news-db.cdwfvnatcuqz.ap-southeast-2.rds.amazonaws.com",
+        "host": "database-1-instance-1.cdwfvnatcuqz.ap-southeast-2.rds.amazonaws.com",
         "port": 5432,
         "database": "news"
     },
-    "rss": {
-        "ABCUS Top": "https://abcnews.go.com/abcnews/topstories",
-        "CBS World": "https://www.cbsnews.com/latest/rss/world",
-        "GRD World": "https://www.theguardian.com/world/rss",
-        "BBC World": "http://feeds.bbci.co.uk/news/world/rss.xml",
-        "SMH World": "https://www.smh.com.au/rss/world.xml",
-        "SBS World": "https://www.sbs.com.au/news/topic/world/feed"
-    }
+    "local": {
+        "user": "postgres",
+        "password": "mysecretpassword",
+        "host": "localhost",
+        "port": 5432,
+        "database": "news"
+    },
+    "openai_api_key": ""
 }

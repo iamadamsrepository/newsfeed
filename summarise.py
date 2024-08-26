@@ -7,19 +7,19 @@ from db.db_connection import DBHandler
 from db.db_objects import ArticleRow
 
 
-def get_article_summary(article: ArticleRow, client: OpenAI) -> str:
+def get_article_summary(article: ArticleRow, client: OpenAI, retries: int = 0) -> str:
     tools = [
         {
             "type": "function",
             "function": {
                 "name": "summarise_article",
-                "description": "Make summary of the input article text up to 150 words.",
+                "description": "Make summary of the input article text up to 100 words.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "summary": {
                             "type": "string",
-                            "description": "Summary of the article up to 150 words.",
+                            "description": "Summary of the article up to 100 words.",
                         }
                     },
                     "required": ["summary"],
@@ -30,19 +30,26 @@ def get_article_summary(article: ArticleRow, client: OpenAI) -> str:
     messages = [
         {
             "role": "system",
-            "content": "For a given article, return a summary of the article up to 150 words."
+            "content": "For a given article, return a summary of the article up to 100 words."
         },
-        {"role": "user", "content": article.article}
+        {"role": "user", "content": ' '.join(article.body.split()[:600])}
     ]
     response: ChatCompletion = client.chat.completions.create(
         model="gpt-3.5-turbo-0125",
         messages=messages,
         tools=tools,
-        tool_choice="auto",  # auto is default, but we'll be explicit
+        tool_choice="auto",
+        max_tokens=2000
     )
-    assert len(response.choices[0].message.tool_calls) == 1
-    summary = json.loads(response.choices[0].message.tool_calls[0].function.arguments)['summary']
-    assert summary
+    try:
+        assert len(response.choices[0].message.tool_calls) == 1
+        summary = json.loads(response.choices[0].message.tool_calls[0].function.arguments)['summary']
+        assert summary
+    except:
+        if retries == 2:
+            raise ValueError
+        print('Retrying')
+        return get_article_summary(article, client, retries+1)
     return summary
 
 
@@ -64,6 +71,6 @@ def summarise_articles(db_config: dict, client: OpenAI):
         })
 
 if __name__ == '__main__':
-    config = json.load(open("./config.json"))["db"]
+    config = json.load(open("./config.json"))
     client = OpenAI(api_key=config['openai_api_key'])
     summarise_articles(config['db'], client)

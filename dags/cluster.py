@@ -56,7 +56,7 @@ class Cluster:
             "summary": self.summary
         }
 
-def filter_clusters(clusters: Dict[int, Cluster], n_clusters: int = 12) -> List[Cluster]:
+def filter_clusters(clusters: Dict[int, Cluster], n_clusters: int = 16) -> List[Cluster]:
     ordered_by_score = sorted(clusters.values(), reverse=True, key=lambda c: c.score)
     return ordered_by_score[:n_clusters]
 
@@ -171,4 +171,6 @@ def cluster_articles(db_config: dict, client: OpenAI):
 
     
 if __name__ == '__main__':
-    cluster_articles()
+    client = OpenAI()
+    config = json.load(open("./config.json"))["db"]
+    cluster_articles(config, client)

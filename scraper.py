@@ -123,6 +123,8 @@ class NYTScraper(Scraper):
 
     @classmethod
     def article_text(cls, url: str) -> str:
+        if "nytimes.com/live/" in url:
+            return None
         html_str: str = requests.get(url).text
         json_str: str = html_str.split(cls.split_before)[1].split(cls.split_after)[0]
         ...
@@ -211,7 +213,7 @@ scrapers: Dict[str, Scraper] = {
 
 
 def pull_articles(config: dict):
-    db = DBHandler(config['db'])
+    db = DBHandler(config['local'])
     articles = []
     feeds = RSSFeeds.pull(config['rss'])
     for feed in feeds:
