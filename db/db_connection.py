@@ -1,8 +1,8 @@
 import logging
-from typing import List, Optional, Union
+from typing import Optional, Union
+
 import psycopg2
 from psycopg2.extensions import connection
-import datetime as dt
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class DBHandler:
         except Exception as e:
             logger.error(e)
             raise e
-        
+
     def insert_row(self, table: str, row_dict: dict):
         query = f"""
             INSERT INTO {table}
@@ -56,7 +56,7 @@ class DBHandler:
     #     query = f"""
     #         INSERT INTO {table}
     #         ({str(list(row_dicts[0].keys())).replace("'", "")[1:-1]})
-    #         VALUES 
+    #         VALUES
     #         {"(" + "), (".join(", ".join(self.adj_value(value) for value in row.values()) for row in row_dicts) + ")"}
     #     """
     #     return self.run_sql_no_return(query)

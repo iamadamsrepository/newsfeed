@@ -17,12 +17,6 @@ TODO:
 12. Get summariser to check whether its actually an article
 13. Make embedding from summary not article text
 12. H add multiple pages for each provider
+---------------------------------------------------------------------------------------------------
+13. 
 
-
-GET IT BACK ON TODO LIST
-1. Sign into aws
-2. pay bill
-2. Check DB is up connect on PSQL
-3. Check API is up on lambda
-4. Check website is up on the s3
-5. Run backend pipeline

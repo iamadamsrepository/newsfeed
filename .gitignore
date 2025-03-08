@@ -17,3 +17,5 @@ old/
 dags/
 
 config.json
+
+.python-version
