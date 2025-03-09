@@ -1,7 +1,7 @@
 import datetime as dt
 import json
 import re
-from collections import namedtuple
+from collections import Counter, namedtuple
 from typing import List, Tuple
 
 import numpy as np
@@ -48,12 +48,15 @@ def get_story_headline_and_summary(story: List[ArticleInfo], client: OpenAI, ret
             },
         },
     }
+    if len(story) > 30:
+        message_articles = sorted(story, key=lambda x: x.ts, reverse=True)[:40]
+        # TODO better criterion including provider variety
     messages = [
         {
             "role": "system",
             "content": "You take in headlines and article text from a collection of articles about a news story. "
             "You need to provide a headline, story summary, coverage summary and keywords for the story. "
-            "The headline should be up to 15 words, the story summary up to 150 words, the coverage summary up to 100 words, and up to 6 keywords. "
+            "The headline should be up to 15 words, the story summary up to 150 words, the coverage summary up to 100 words, and up to 10 keywords. "
             "The headline should be a brief, attention-grabbing title for the story."
             "The story summary should be a concise overview of the story, including the most important information. "
             "The coverage summary should compare and contrast the way the story is told between the articles. "
@@ -65,7 +68,7 @@ def get_story_headline_and_summary(story: List[ArticleInfo], client: OpenAI, ret
             + "\n\n".join(
                 [
                     f"{a.provider}\t{a.ts.strftime('%Y-%m-%d')}\n{a.title}\n{a.subtitle}\n{' '.join(a.body.split()[:200])}"
-                    for a in story
+                    for a in message_articles
                 ]
             ),
         },
@@ -100,14 +103,14 @@ def get_story_headline_and_summary(story: List[ArticleInfo], client: OpenAI, ret
 def get_article_embeddings(db: DBHandler) -> list[ArticleInfo]:
     sql_out = db.run_sql(
         f"""
-        select a.id, a.url, a.ts, a.title, a.subtitle, a.body, 
+        select a.id, a.url, a.ts, a.title, a.subtitle, a.body,
         p.name, e.embedding
         from articles a
-        left join article_embeddings e 
+        left join article_embeddings e
         on a.id = e.article_id
         left join providers p
         on a.provider_id = p.id
-        where a.ts > '{(dt.datetime.now() - dt.timedelta(hours=72)).strftime('%Y-%m-%d %H:%M:%S')}'
+        where a.ts > '{(dt.datetime.now() - dt.timedelta(hours=72)).strftime("%Y-%m-%d %H:%M:%S")}'
         and e.embedding is not null
     """
     )
@@ -121,8 +124,10 @@ def cluster_into_stories(articles: List[ArticleInfo]) -> List[List[ArticleInfo]]
     for i in range(len(np.unique(labels))):
         cluster_articles = [a for a, label in zip(articles, labels) if label == i]
         n_providers = len(set(a.provider for a in cluster_articles))
-        if n_providers >= 3 and len(cluster_articles) >= 3:
+        if n_providers >= 3:
             stories.append(cluster_articles)
+        elif len(cluster_articles) >= 6 or n_providers == 1:
+            ...  # This may be a signal of issue with the filtering when collecting articles
     return stories
 
 
@@ -181,12 +186,21 @@ def print_story(articles: List[ArticleInfo], headline: str, summary: str, covera
         print("\t" + a.provider + "\t" + a.title + "\n\t\t" + a.url)
 
 
+def print_stories_breakdown(stories: List[List[ArticleInfo]]):
+    for i, story in enumerate(stories):
+        providers = Counter([a.provider for a in story])
+        print(
+            f"{i}: {len(story)} articles\t{len(providers)} providers\t{list(providers.values())}\n\t{list(providers.keys())}"
+        )
+
+
 def cluster_articles(db_config: dict, client: OpenAI, dry_run=False):
     db = DBHandler(db_config)
     articles = get_article_embeddings(db)
     stories = cluster_into_stories(articles)
+    # print_stories_breakdown(stories)
 
-    digest_id = (db.run_sql("select coalesce(max(digest_id), 0) from stories")[0][0] or -1) + 1
+    digest_id = db.run_sql("select max(digest_id) from stories")[0][0] + 1
     digest_description = dt.date.today().strftime(f"%Y%m%d-{digest_id}")
     for articles in stories:
         headline, story_summary, coverage_summary, keywords = get_story_headline_and_summary(articles, client)

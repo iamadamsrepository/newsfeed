@@ -20,3 +20,4 @@ class ArticleRow:
     subtitle: str
     url: str
     body: str
+    image_url: str

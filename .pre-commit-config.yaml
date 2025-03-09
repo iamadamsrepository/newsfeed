@@ -13,7 +13,7 @@ repos:
     rev: v0.0.241
     hooks:
       - id: ruff
-        args: ["--fix"]
+        args: ["--fix", "--ignore", "C901"]
 
   - repo: https://github.com/PyCQA/autoflake
     rev: v2.0.2

@@ -47,7 +47,7 @@ class DBHandler:
         query = f"""
             INSERT INTO {table}
             ({str(list(row_dict.keys())).replace("'", "")[1:-1]})
-            VALUES 
+            VALUES
             {"(" + ", ".join(f"%({col})s" for col in row_dict.keys()) + ")"}
         """
         self.run_sql_no_return(query, row_dict)

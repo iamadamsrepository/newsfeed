@@ -29,4 +29,4 @@ use_parentheses = true
 [tool.ruff]
 line-length = 120
 select = ["E", "F", "W", "C90"]
-ignore = ["E501"]
+ignore = ["E501", "C901"]

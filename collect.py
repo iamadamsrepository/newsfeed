@@ -53,7 +53,7 @@ class Collector:
         def download_articles(provider: ProviderRow):
             source = self.sources[provider.name]
             for article in source.articles:
-                if self.article_criterion(provider, article):
+                if self.article_acceptance_criterion(provider, article):
                     print(f"Accepted: {article.title}, {article.url}")
                     self.articles.append(
                         {
@@ -63,6 +63,7 @@ class Collector:
                             "url": article.url.split("?")[0],
                             "body": re.sub(r"\s+", " ", article.text),
                             "subtitle": article.meta_description,
+                            "image_url": article.top_image,
                         }
                     )
                     ...
@@ -80,7 +81,7 @@ class Collector:
         for thread in threads:
             thread.join()
 
-    def article_criterion(self, provider: ProviderRow, article: Article) -> bool:
+    def article_acceptance_criterion(self, provider: ProviderRow, article: Article) -> bool:
         if not article.url:
             return False
         if "#" in article.url:
@@ -91,7 +92,11 @@ class Collector:
         time.sleep(0.1)
         if article.download_state == ArticleDownloadState.FAILED_RESPONSE:
             return False
-        article.parse()
+        try:
+            article.parse()
+        except Exception:
+            time.sleep(2)
+            article.parse()
         if not article.publish_date:
             return False
         if article.publish_date.date() < dt.date.today() - dt.timedelta(days=3):

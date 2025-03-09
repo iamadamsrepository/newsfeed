@@ -16,6 +16,7 @@ def main():
             subtitle text not null,
             url text not null,
             body text not null,
+            image_url text not null,
             constraint fk_provider_id foreign key (provider_id) references providers(id)
         )
     """
@@ -41,9 +42,9 @@ def main():
             ts timestamp not null,
             title text not null,
             summary text not null,
-            coverage text,
-            digest_id int,
-            digest_description text
+            coverage text not null,
+            digest_id int not null,
+            digest_description text not null
         )
     """
     create_story_articles_table = """

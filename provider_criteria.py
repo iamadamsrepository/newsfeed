@@ -63,7 +63,10 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
     "MSNBC": {"blacklist_categories": set()},
     "NPR": {"blacklist_categories": {"podcasts", "sections", "series", "transcripts"}},
     "SBS": {"blacklist_categories": {"audio", "food", "sport", "whats-on", "language"}},
-    "Sky News Australia": {"blacklist_categories": {"stream", "listen"}, "whitelist_categories": {"skynews"}},
+    "Sky News Australia": {
+        "blacklist_categories": {"stream", "listen", "podcast-episode", "video"},
+        "whitelist_categories": {"skynews"},
+    },
     "The Age": {"blacklist_categories": {"culture", "goodfood", "living", "property", "sport"}},
     "The Associated Press": {"blacklist_categories": set()},
     "The Economist": {"blacklist_categories": set()},
@@ -73,6 +76,8 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
     "The Guardian": {
         "blacklist_categories": {
             "audio",
+            "books",
+            "commentisfree",
             "culture",
             "film",
             "food",
@@ -91,11 +96,13 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
         "blacklist_categories": {
             "arts",
             "athletic",
+            "cooking",
             "crosswords",
             "espanol",
             "interactive",
             "pageoneplus",
             "podcasts",
+            "recipes",
             "reviews",
         }
     },
@@ -141,6 +148,7 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
             "style",
             "travel",
             "video",
+            "weather",
             "wellness",
         }
     },
