@@ -8,6 +8,7 @@ class ProviderRow:
     name: str
     url: str
     favicon_url: str
+    country: str
 
 
 @dataclass

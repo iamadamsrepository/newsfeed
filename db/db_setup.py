@@ -1,5 +1,6 @@
 import json
 
+import pandas as pd
 from db_connection import DBHandler
 
 
@@ -40,6 +41,7 @@ def main():
             ts timestamp not null,
             title text not null,
             summary text not null,
+            coverage text,
             digest_id int,
             digest_description text
         )
@@ -57,13 +59,14 @@ def main():
             id serial not null primary key,
             name text not null,
             url text not null,
-            favicon_url text not null
+            favicon_url text not null,
+            country text not null
         )
     """
     create_keywords_table = """
         create table if not exists keywords (
             id serial primary key,
-            keyword text not null
+            keyword text not null unique
         )
     """
     create_story_keywords_table = """
@@ -83,9 +86,12 @@ def main():
     db.run_sql_no_return(create_story_articles_table)
     db.run_sql_no_return(create_keywords_table)
     db.run_sql_no_return(create_story_keywords_table)
-    # providers = pd.read_csv('./db/providers.csv')
-    # for _, row in providers.iterrows():
-    #     db.insert_row("providers", dict(row))
+    providers = pd.read_csv("./db/providers.csv")
+    for _, row in providers.iterrows():
+        provider_exists_query = "select exists(select 1 from providers where name = %s)"
+        provider_exists = db.run_sql(provider_exists_query, (row["name"],))
+        if not provider_exists[0][0]:
+            db.insert_row("providers", dict(row))
     ...
 
 

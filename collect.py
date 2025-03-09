@@ -2,6 +2,7 @@ import datetime as dt
 import json
 import re
 import threading
+import time
 from typing import List
 
 from newspaper import Config, Source
@@ -24,6 +25,10 @@ class Collector:
             "audio",
             "font",
         ]  # Set ignored content types
+        self.config.requests_params["headers"][
+            "User-Agent"
+        ] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:135.0) Gecko/20100101 Firefox/135.0"
+        self.config.memorize_articles = False
         self.articles = []
 
     def collect(self):
@@ -37,7 +42,7 @@ class Collector:
                 # only_in_path=True,
             )
             self.sources[provider.name] = s
-            # print(f"Built {provider.name}, {provider.url}: found {len(s.articles)} articles")
+            print(f"Built {provider.name}, {provider.url}: found {len(s.articles)} articles")
 
         threads: list[threading.Thread] = [threading.Thread(target=build_source, args=(p,)) for p in self.providers]
         for thread in threads:
@@ -55,7 +60,7 @@ class Collector:
                             "provider_id": provider.id,
                             "ts": article.publish_date,
                             "title": article.title,
-                            "url": article.url,
+                            "url": article.url.split("?")[0],
                             "body": re.sub(r"\s+", " ", article.text),
                             "subtitle": article.meta_description,
                         }
@@ -75,10 +80,7 @@ class Collector:
         for thread in threads:
             thread.join()
 
-        ...
-
     def article_criterion(self, provider: ProviderRow, article: Article) -> bool:
-        article.url = article.url.split("?")[0]
         if not article.url:
             return False
         if "#" in article.url:
@@ -86,6 +88,7 @@ class Collector:
         if not check_article(provider.name, article):
             return False
         article.download()
+        time.sleep(0.1)
         if article.download_state == ArticleDownloadState.FAILED_RESPONSE:
             return False
         article.parse()

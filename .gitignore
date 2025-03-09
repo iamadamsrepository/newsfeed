@@ -19,3 +19,6 @@ dags/
 config.json
 
 .python-version
+db/config.json
+api/config.json
+config.json

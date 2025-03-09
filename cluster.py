@@ -13,9 +13,7 @@ from openai.types.chat.chat_completion import ChatCompletion
 
 from db.db_connection import DBHandler
 
-ArticleInfo = namedtuple(
-    "ArticleInfo", ["id", "url", "ts", "title", "subtitle", "body", "provider", "embedding", "summary"]
-)
+ArticleInfo = namedtuple("ArticleInfo", ["id", "url", "ts", "title", "subtitle", "body", "provider", "embedding"])
 
 
 def get_story_headline_and_summary(story: List[ArticleInfo], client: OpenAI, retries=0) -> Tuple[str, str, List[str]]:
@@ -27,9 +25,13 @@ def get_story_headline_and_summary(story: List[ArticleInfo], client: OpenAI, ret
             "schema": {
                 "type": "object",
                 "properties": {
-                    "summary": {
+                    "story_summary": {
                         "type": "string",
                         "description": "Up to 150 words to summarise the story based on the articles.",
+                    },
+                    "coverage_summary": {
+                        "type": "string",
+                        "description": "Up to 100 words to describe the ways the different articles told the story.",
                     },
                     "headline": {
                         "type": "string",
@@ -37,11 +39,11 @@ def get_story_headline_and_summary(story: List[ArticleInfo], client: OpenAI, ret
                     },
                     "keywords": {
                         "type": "array",
-                        "description": "A list of keywords including names, places, and events related to the article.",
+                        "description": "A list of named entities including names, places, events and institutions related to the article.",
                         "items": {"type": "string"},
                     },
                 },
-                "required": ["summary", "headline", "keywords"],
+                "required": ["story_summary", "coverage_summary", "headline", "keywords"],
                 "additionalProperties": False,
             },
         },
@@ -49,26 +51,23 @@ def get_story_headline_and_summary(story: List[ArticleInfo], client: OpenAI, ret
     messages = [
         {
             "role": "system",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "You take in headlines and article text from a collection of articles about a news story. "
-                    "You need to provide a headline, summary and keywords for the story. "
-                    "The headline should be up to 15 words and the summary should be up to 150 words. "
-                    "The summary should be a concise overview of the story, including the most important information. "
-                    "The headline should be a brief, attention-grabbing title for the story.",
-                }
-            ],
+            "content": "You take in headlines and article text from a collection of articles about a news story. "
+            "You need to provide a headline, story summary, coverage summary and keywords for the story. "
+            "The headline should be up to 15 words, the story summary up to 150 words, the coverage summary up to 100 words, and up to 6 keywords. "
+            "The headline should be a brief, attention-grabbing title for the story."
+            "The story summary should be a concise overview of the story, including the most important information. "
+            "The coverage summary should compare and contrast the way the story is told between the articles. "
+            "The keywords should be names, places, events and institutions related to the story.",
         },
         {
             "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "Here are the headlines and summaries of the articles about the story:"
-                    "\n\n".join([f"{a.title}\n{a.subtitle}\n{' '.join(a.body.split()[:200])}" for a in story]),
-                }
-            ],
+            "content": "Here are the headlines and summaries of the articles about the story:\n\n"
+            + "\n\n".join(
+                [
+                    f"{a.provider}\t{a.ts.strftime('%Y-%m-%d')}\n{a.title}\n{a.subtitle}\n{' '.join(a.body.split()[:200])}"
+                    for a in story
+                ]
+            ),
         },
     ]
     response: ChatCompletion = client.chat.completions.create(
@@ -86,7 +85,8 @@ def get_story_headline_and_summary(story: List[ArticleInfo], client: OpenAI, ret
         choice = response.choices[0]
         message = choice.message
         content = json.loads(message.content)
-        assert content["summary"]
+        assert content["story_summary"]
+        assert content["coverage_summary"]
         assert content["headline"]
         assert content["keywords"]
     except (AssertionError, json.JSONDecodeError):
@@ -94,25 +94,24 @@ def get_story_headline_and_summary(story: List[ArticleInfo], client: OpenAI, ret
         if retries == 2:
             raise ValueError
         return get_story_headline_and_summary(story, client, retries + 1)
-    return content["headline"], content["summary"], content["keywords"]
+    return content["headline"], content["story_summary"], content["coverage_summary"], content["keywords"]
 
 
 def get_article_embeddings(db: DBHandler) -> list[ArticleInfo]:
     sql_out = db.run_sql(
         f"""
-        select a.id, a.url, a.ts, a.title, a.subtitle, a.body, p.name, 
-        e.embedding, s.summary
+        select a.id, a.url, a.ts, a.title, a.subtitle, a.body, 
+        p.name, e.embedding
         from articles a
         left join article_embeddings e 
         on a.id = e.article_id
-        left join article_summaries s
-        on a.id = s.article_id
         left join providers p
         on a.provider_id = p.id
         where a.ts > '{(dt.datetime.now() - dt.timedelta(hours=72)).strftime('%Y-%m-%d %H:%M:%S')}'
+        and e.embedding is not null
     """
     )
-    return [ArticleInfo(a[0], a[1], a[2], a[3], a[4], a[5], a[6], eval(a[7]), a[8]) for a in sql_out]
+    return [ArticleInfo(a[0], a[1], a[2], a[3], a[4], a[5], a[6], eval(a[7])) for a in sql_out]
 
 
 def cluster_into_stories(articles: List[ArticleInfo]) -> List[List[ArticleInfo]]:
@@ -143,6 +142,7 @@ def write_story_to_db(
     articles: List[ArticleInfo],
     headline: str,
     summary: str,
+    coverage: str,
     keywords: List[str],
     digest_id: int,
     digest_description: str,
@@ -153,6 +153,7 @@ def write_story_to_db(
             "ts": dt.datetime.now(),
             "title": headline,
             "summary": summary,
+            "coverage": coverage,
             "digest_id": digest_id,
             "digest_description": digest_description,
         },
@@ -161,16 +162,20 @@ def write_story_to_db(
     for article in articles:
         db.insert_row("story_articles", {"story_id": story_id, "article_id": article.id})
     for keyword in keywords:
-        db.insert_row("keywords", {"keyword": keyword})
-        keyword_id = db.run_sql("select max(id) from keywords")[0][0]
+        keyword_id = db.run_sql("select id from keywords where keyword = %s", (keyword,))
+        if keyword_id:
+            keyword_id = keyword_id[0][0]
+        else:
+            db.insert_row("keywords", {"keyword": keyword})
+            keyword_id = db.run_sql("select max(id) from keywords")[0][0]
         db.insert_row("story_keywords", {"story_id": story_id, "keyword_id": keyword_id})
 
 
-def print_story(articles: List[ArticleInfo], headline: str, summary: str, keywords: List[str]):
+def print_story(articles: List[ArticleInfo], headline: str, summary: str, coverage: str, keywords: List[str]):
     n_providers = len(set(a.provider for a in articles))
     print("====================================")
     print(
-        f"Wrote story '{headline}' from {len(articles)} articles and {n_providers} providers:\n{keywords=}\n{summary}"
+        f"Wrote story '{headline}' from {len(articles)} articles and {n_providers} providers:\n{keywords=}\n{summary=}\n{coverage=}"
     )
     for a in articles:
         print("\t" + a.provider + "\t" + a.title + "\n\t\t" + a.url)
@@ -184,10 +189,12 @@ def cluster_articles(db_config: dict, client: OpenAI, dry_run=False):
     digest_id = (db.run_sql("select coalesce(max(digest_id), 0) from stories")[0][0] or -1) + 1
     digest_description = dt.date.today().strftime(f"%Y%m%d-{digest_id}")
     for articles in stories:
-        headline, summary, keywords = get_story_headline_and_summary(articles, client)
+        headline, story_summary, coverage_summary, keywords = get_story_headline_and_summary(articles, client)
         keywords = [sk for k in keywords if (sk := sanitize_keyword(k))]
-        write_story_to_db(db, articles, headline, summary, keywords, digest_id, digest_description)
-        print_story(articles, headline, summary, keywords)
+        write_story_to_db(
+            db, articles, headline, story_summary, coverage_summary, keywords, digest_id, digest_description
+        )
+        print_story(articles, headline, story_summary, coverage_summary, keywords)
         ...
 
 

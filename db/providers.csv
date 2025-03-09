@@ -1,9 +1,13 @@
-name,url,favicon_url
-The Washington Post,https://www.washingtonpost.com/,https://www.washingtonpost.com/favicon.svg
-The New York Times,https://www.nytimes.com/,https://www.nytimes.com/vi-assets/static-assets/favicon-d2483f10ef688e6f89e23806b9700298.ico
-ABC,https://www.abc.net.au/news,https://www.abc.net.au/newsnews-web/assets/favicon-32x32.png
-The Sydney Morning Herald,https://www.smh.com.au/,https://www.smh.com.au/favicons/smh.ico
-SBS,https://www.sbs.com.au/,https://www.sbs.com.au/_next/static/img/news/favicon_48x48-1c81a55.png
-The Guardian,https://www.theguardian.com/,https://static.guim.co.uk/images/favicon-32x32.ico
-BBC,https://www.bbc.com/news,https://www.bbc.co.uk/favicon.ico
-Al Jazeera,https://www.aljazeera.com/news/,https://www.aljazeera.com/favicon_aje.ico
+name,country,url,favicon_url
+The Washington Post,USA,https://www.washingtonpost.com/,https://www.washingtonpost.com/favicon.svg
+The New York Times,USA,https://www.nytimes.com/,https://www.nytimes.com/vi-assets/static-assets/favicon-d2483f10ef688e6f89e23806b9700298.ico
+ABC,Australia,https://www.abc.net.au/news,https://www.abc.net.au/newsnews-web/assets/favicon-32x32.png
+The Sydney Morning Herald,Australia,https://www.smh.com.au/,https://www.smh.com.au/favicons/smh.ico
+SBS,Australia,https://www.sbs.com.au/,https://www.sbs.com.au/_next/static/img/news/favicon_48x48-1c81a55.png
+The Guardian,UK,https://www.theguardian.com/,https://static.guim.co.uk/images/favicon-32x32.ico
+BBC,UK,https://www.bbc.com/news,https://www.bbc.co.uk/favicon.ico
+Al Jazeera,Qatar,https://www.aljazeera.com/news/,https://www.aljazeera.com/favicon_aje.ico
+CNN,USA,https://edition.cnn.com/,https://edition.cnn.com/media/sites/cnn/apple-touch-icon.png
+DW,Europe,https://www.dw.com/en/,https://www.dw.com/images/icons/favicon-180x180.png
+Hindustan Times,India,https://www.hindustantimes.com/,https://www.hindustantimes.com/res/images/icons/icon-57x57.png
+Sky News Australia,Australia,https://www.skynews.com.au/,https://www.skynews.com.au/wp-content/themes/newscorpau-news-dna/dist/images/apple-touch-icons/skynews-apple-touch-icon.png
