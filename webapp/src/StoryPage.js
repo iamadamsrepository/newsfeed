@@ -3,6 +3,52 @@ import { useParams } from "react-router-dom";
 import { formatDate, breakIntoSentences } from "./utils";
 import { apiHost, colors } from "./config";
 
+function StoryImage(props) {
+  const image_article = props.image_article;
+  const image_url = image_article.image_url || "logo.png";
+  const image_favicon = image_article.provider_favicon || "logo.png";
+  const image_article_url = image_article.url || "logo.png";
+
+  return (
+    <div style={{ display: "flex", justifyContent: "center" }}>
+      <a
+        href={image_article_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        key={image_article_url}
+        style={{
+          display: "inline-block",
+          margin: "10px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            position: "relative",
+            width: "fit-content",
+          }}
+        >
+          <img src={image_url} alt={image_url} style={{ height: "200px" }} />
+          <img
+            src={image_favicon}
+            alt="favicon"
+            style={{
+              position: "absolute",
+              top: "0px",
+              left: "0px",
+              width: "40px",
+              height: "40px",
+              opacity: 0.5,
+            }}
+            className="favicon-overlay"
+          />
+        </div>
+      </a>
+    </div>
+  );
+}
+
 export default function StoryPage() {
   const { id } = useParams();
   const [story, setStory] = useState(null);
@@ -16,10 +62,6 @@ export default function StoryPage() {
     fetchStory();
   }, [id]);
 
-  const image_url = story?.image_article?.image_url || "logo.png";
-  const image_favicon = story?.image_article?.provider_favicon || "logo.png";
-  const image_article = story?.image_article?.url || "logo.png";
-
   const story_items = story ? (
     <ul>
       {breakIntoSentences(story.summary).map((sentence, index) => {
@@ -28,45 +70,7 @@ export default function StoryPage() {
             <li key={`story-item-${index}`} style={{ marginBottom: "10px" }}>
               {sentence}
             </li>,
-            <div
-              key={`image-container-${index}`}
-              style={{ display: "flex", justifyContent: "center" }}
-            >
-              <a
-                href={image_article}
-                target="_blank"
-                rel="noopener noreferrer"
-                key={`image-${index}`}
-                style={{
-                  display: "inline-block",
-                  margin: "10px",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    position: "relative",
-                    width: "fit-content",
-                  }}
-                >
-                  <img src={image_url} alt={story.title} style={{ height: "200px" }} />
-                  <img
-                    src={image_favicon}
-                    alt="favicon"
-                    style={{
-                      position: "absolute",
-                      top: "0px",
-                      left: "0px",
-                      width: "40px",
-                      height: "40px",
-                      opacity: 0.5,
-                    }}
-                    className="favicon-overlay"
-                  />
-                </div>
-              </a>
-            </div>,
+            <StoryImage image_article={story.image_article} />,
           ];
         }
         return (
