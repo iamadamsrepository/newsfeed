@@ -123,6 +123,7 @@ async def fetch_stories_loop():
     while True:
         stories = await fetch_stories()
         stories = sorted(stories, key=story_ranking_criterion, reverse=True)
+        print("Fetched stories")
         await asyncio.sleep(600)
 
 
