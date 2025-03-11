@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { formatDate } from './utils'; 
-import { breakIntoSentences } from './utils'; 
-import { apiHost, colors } from './config'; 
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { formatDate, breakIntoSentences } from "./utils";
+import { apiHost, colors } from "./config";
 
 export default function StoryPage() {
   const { id } = useParams();
@@ -18,6 +17,8 @@ export default function StoryPage() {
   }, [id]);
 
   const image_url = story?.image_article?.image_url || "logo.png";
+  const image_favicon = story?.image_article?.provider_favicon || "logo.png";
+  const image_article = story?.image_article?.url || "logo.png";
 
   const story_items = story ? (
     <ul>
@@ -27,8 +28,44 @@ export default function StoryPage() {
             <li key={`story-item-${index}`} style={{ marginBottom: "10px" }}>
               {sentence}
             </li>,
-            <div key={`image-${index}`} style={{ display: "flex", justifyContent: "center" }}>
-              <img src={image_url} alt={story.title} style={{ height: "200px", margin: "10px" }} />
+            <div
+              key={`image-container-${index}`}
+              style={{ display: "flex", justifyContent: "center" }}
+            >
+              <a
+                href={image_article}
+                target="_blank"
+                rel="noopener noreferrer"
+                key={`image-${index}`}
+                style={{
+                  display: "inline-block",
+                  margin: "10px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    position: "relative",
+                    width: "fit-content",
+                  }}
+                >
+                  <img src={image_url} alt={story.title} style={{ height: "200px" }} />
+                  <img
+                    src={image_favicon}
+                    alt="favicon"
+                    style={{
+                      position: "absolute",
+                      top: "0px",
+                      left: "0px",
+                      width: "40px",
+                      height: "40px",
+                      opacity: 0.5,
+                    }}
+                    className="favicon-overlay"
+                  />
+                </div>
+              </a>
             </div>,
           ];
         }
@@ -50,7 +87,7 @@ export default function StoryPage() {
         padding: 0,
         display: "grid",
         gridTemplateColumns: window.innerWidth > 800 ? "1fr 1fr" : "1fr",
-        gap: "10px"
+        gap: "10px",
       }}
     >
       {story.articles.map((article, index) => (
@@ -119,7 +156,9 @@ export default function StoryPage() {
             </p>
           </div>
           <p style={{ margin: "5px", fontSize: "13px" }}>{article.title}</p>
-          <p style={{ margin: "5px", fontSize: "12px", color: colors.lightGray }}>{article.subtitle}</p>
+          <p style={{ margin: "5px", fontSize: "12px", color: colors.lightGray }}>
+            {article.subtitle}
+          </p>
         </li>
       ))}
     </ul>
@@ -175,5 +214,7 @@ export default function StoryPage() {
         {articles_items}
       </div>
     </div>
-  ) : (<div>Loading...</div>)
+  ) : (
+    <div>Loading...</div>
+  );
 }

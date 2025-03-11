@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 
 import { colors } from "./config";
 
-
 function StoryListItem(props) {
   const story = props.story;
   return (
@@ -152,38 +151,42 @@ function LeadStoryListItem(props) {
 }
 
 export default function StoryItems(props) {
-    const stories = props.stories
-    return (
-        <main
-            style={{
-                backgroundSize: "cover",
-                backgroundColor: colors.grayBlue,
-                color: colors.white,
-                fontFamily: "Monaco, monospace",
-                minHeight: "100vh",
-            }}
-        >
-            <section
-                style={{
-                    padding: "5px",
-                    outline: "0px solid #FFFFFF",
-                    margin: "20px",
-                    backgroundColor: "rgba(0, 0, 0, 0.1)",
-                }}
-            >
-                <h2>Daily Digest</h2>
-                {stories.length > 0 ? (
-                    <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
-                        {stories.map((story, index) => (
-                            <li key={story.id}>
-                                {index === 0 ? <LeadStoryListItem story={story} /> : <StoryListItem story={story} />}
-                            </li>
-                        ))}
-                    </ul>
+  const stories = props.stories;
+  return (
+    <main
+      style={{
+        backgroundSize: "cover",
+        backgroundColor: colors.grayBlue,
+        color: colors.white,
+        fontFamily: "Monaco, monospace",
+        minHeight: "100vh",
+      }}
+    >
+      <section
+        style={{
+          padding: "5px",
+          outline: "0px solid #FFFFFF",
+          margin: "20px",
+          backgroundColor: "rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        <h2>Daily Digest</h2>
+        {stories.length > 0 ? (
+          <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
+            {stories.map((story, index) => (
+              <li key={story.id}>
+                {index === 0 ? (
+                  <LeadStoryListItem story={story} />
                 ) : (
-                    <div>Loading...</div>
+                  <StoryListItem story={story} />
                 )}
-            </section>
-        </main>
-    );
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div>Loading...</div>
+        )}
+      </section>
+    </main>
+  );
 }
