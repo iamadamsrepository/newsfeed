@@ -4,6 +4,8 @@ import { Helmet } from 'react-helmet';
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
+const apiHost = "http://192.168.1.106:8000";
+
 const colors = {
   red: '#fd5754',
   blue: '#5be1e7',
@@ -19,7 +21,7 @@ function StoryPage() {
 
   useEffect(() => {
     const fetchStory = async () => {
-      const response = await fetch(`http://localhost:8000/story/${id}`);
+      const response = await fetch(apiHost + `/story/${id}`);
       const data = await response.json();
       setStory(data);
     };
@@ -130,7 +132,7 @@ function App() {
     const getData = async () => {
       if (stories.length === 0) {
         console.log("fetching data");
-        const url = "http://localhost:8000/stories";
+        const url = apiHost + "/stories";
         let response = await fetch(url);
         let stories = await response.json();
         stories.forEach(story => {
