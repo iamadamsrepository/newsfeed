@@ -18,5 +18,5 @@ TODO:
 13. Make embedding from summary not article text
 12. H add multiple pages for each provider
 ---------------------------------------------------------------------------------------------------
-13. 
-
+13. DONE H Make story page
+14  Phone friendly webiste

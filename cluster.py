@@ -48,9 +48,11 @@ def get_story_headline_and_summary(story: List[ArticleInfo], client: OpenAI, ret
             },
         },
     }
-    if len(story) > 30:
-        message_articles = sorted(story, key=lambda x: x.ts, reverse=True)[:40]
+    if len(story) > 20:
+        message_articles = sorted(story, key=lambda x: x.ts, reverse=True)[:20]
         # TODO better criterion including provider variety
+    else:
+        message_articles = story
     messages = [
         {
             "role": "system",
@@ -58,7 +60,7 @@ def get_story_headline_and_summary(story: List[ArticleInfo], client: OpenAI, ret
             "You need to provide a headline, story summary, coverage summary and keywords for the story. "
             "The headline should be up to 15 words, the story summary up to 150 words, the coverage summary up to 100 words, and up to 10 keywords. "
             "The headline should be a brief, attention-grabbing title for the story."
-            "The story summary should be a concise overview of the story, including the most important information. "
+            "The story summary should be a concise overview of the story. Include the most important information, and specify dates of specific events. "
             "The coverage summary should compare and contrast the way the story is told between the articles. "
             "The keywords should be names, places, events and institutions related to the story.",
         },
@@ -198,9 +200,9 @@ def cluster_articles(db_config: dict, client: OpenAI, dry_run=False):
     db = DBHandler(db_config)
     articles = get_article_embeddings(db)
     stories = cluster_into_stories(articles)
-    # print_stories_breakdown(stories)
+    print_stories_breakdown(stories)
 
-    digest_id = db.run_sql("select max(digest_id) from stories")[0][0] + 1
+    digest_id = (d if (d := db.run_sql("select max(digest_id) from stories")[0][0]) is not None else -1) + 1
     digest_description = dt.date.today().strftime(f"%Y%m%d-{digest_id}")
     for articles in stories:
         headline, story_summary, coverage_summary, keywords = get_story_headline_and_summary(articles, client)
@@ -215,4 +217,4 @@ def cluster_articles(db_config: dict, client: OpenAI, dry_run=False):
 if __name__ == "__main__":
     config = json.load(open("./config.json"))
     client = OpenAI(api_key=config["openai_api_key"])
-    cluster_articles(config["local"], client, dry_run=False)
+    cluster_articles(config["pi"], client, dry_run=False)

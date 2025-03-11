@@ -5,7 +5,7 @@ from db_connection import DBHandler
 
 
 def main():
-    config = json.load(open("./db/config.json"))["local"]
+    config = json.load(open("./db/config.json"))["pi"]
     db = DBHandler(config)
     create_articles_table = """
         create table if not exists articles (
@@ -28,14 +28,6 @@ def main():
             primary key (article_id)
         )
     """
-    # create_article_summaries_table = """
-    #     create table if not exists article_summaries (
-    #         article_id int not null,
-    #         summary text not null,
-    #         constraint fk_article_id foreign key (article_id) references articles(id),
-    #         primary key (article_id)
-    #     )
-    # """
     create_stories_table = """
         create table if not exists stories (
             id serial primary key,

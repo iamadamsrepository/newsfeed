@@ -42,7 +42,6 @@ class Collector:
                 # only_in_path=True,
             )
             self.sources[provider.name] = s
-            print(f"Built {provider.name}, {provider.url}: found {len(s.articles)} articles")
 
         threads: list[threading.Thread] = [threading.Thread(target=build_source, args=(p,)) for p in self.providers]
         for thread in threads:
@@ -54,7 +53,7 @@ class Collector:
             source = self.sources[provider.name]
             for article in source.articles:
                 if self.article_acceptance_criterion(provider, article):
-                    print(f"Accepted: {article.title}, {article.url}")
+                    # print(f"Accepted: {article.title}, {article.url}")
                     self.articles.append(
                         {
                             "provider_id": provider.id,
@@ -68,13 +67,13 @@ class Collector:
                     )
                     ...
                 else:
-                    print("\t\tRejected: ", article.url)
+                    # print("\t\tRejected: ", article.url)
                     ...
 
         threads = []
         for provider in self.providers:
             source = self.sources[provider.name]
-            print(f"Provider: {provider.name}, {provider.url}. Pulling {len(source.articles)} articles")
+            print(f"{provider.name},\t{len(source.articles)} articles\t{provider.url}")
             thread = threading.Thread(target=download_articles, args=(provider,))
             thread.start()
             threads.append(thread)
@@ -118,7 +117,7 @@ class Collector:
 
 
 def run_collector(config: dict, dry_run=False):
-    db = DBHandler(config["local"])
+    db = DBHandler(config["pi"])
     providers = [
         ProviderRow(*p)
         for p in db.run_sql(
@@ -139,7 +138,6 @@ def run_collector(config: dict, dry_run=False):
                 {"url": article["url"]},
             )
             if found_article:
-                print("Already pulled: ", article["url"])
                 continue
             db.insert_row("articles", article)
         print(f"Wrote {len(collector.articles)}")

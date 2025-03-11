@@ -33,5 +33,5 @@ def embed_articles(db_config: dict, client: OpenAI):
 
 if __name__ == "__main__":
     client = OpenAI(api_key=json.load(open("./config.json"))["openai_api_key"])
-    config = json.load(open("./config.json"))["local"]
+    config = json.load(open("./config.json"))["pi"]
     embed_articles(config, client)

@@ -35,36 +35,51 @@ function StoryPage() {
         {story ? (
           <div>
             <h1>{story.title}</h1>
-            <ul>
-              {story.summary.split('. ').map((sentence, index) => (
-                <li key={index}>{sentence}.</li>
-              ))}
-            </ul>
-            <img src={image_url} alt={story.title} />
-            <ul style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)', padding: "20px" }}>
-              {story.coverage.split('. ').map((sentence, index) => (
-                <li key={index}>{sentence}.</li>
-              ))}
-            </ul>
+            <div>
+              <ul>
+                {story.summary.split('. ').map((sentence, index) => (
+                  <li key={index} style={{ marginBottom: "10px" }}>{sentence}.</li>
+                ))}
+              </ul>
+              <img src={image_url} alt={story.title} style={{ width: "300px", margin: '10px' }} />
+            </div>
+            
+            {story?.articles ? (
+              <div>
+                <h3>Articles</h3>
+                <ul style={{ listStyleType: 'none', padding: 0 }}>
+                  {story.articles.map((article, index) => (
+                    <li key={index} style={{ marginBottom: '15px', backgroundColor: 'rgba(0, 0, 0, 0.1)', padding: '10px', borderRadius: '10px' }}>
+                      <a style={{ display: 'flex', alignItems: 'center', backgroundColor: colors.grayRed, borderRadius: '10px', width: 'fit-content', fontSize: '10px', padding: '5px', fontWeight: 'bold', color: colors.blue, textDecoration: 'none' }}
+                        href={article.provider_url} target="_blank" rel="noopener noreferrer"
+                      >
+                        <img src={article.provider_favicon} alt={article.provider} style={{ width: '16px', height: '16px', marginRight: '5px' }} />
+                        <p>{article.provider}</p>
+                      </a>
+                      <h5>{article.title}</h5>
+                      <h6>{article.subtitle}</h6>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div>No articles available</div>
+            )}
           </div>
         ) : (
           <div>Loading...</div>
         )}
       </div>
       <div style={{ flex: 1 }}>
-        {story && story.articles ? (
-          <ul style={{ listStyleType: 'none', padding: 0 }}>
-            {story.articles.map((article, index) => (
-              <li key={index} style={{ marginBottom: '10px' }}>
-                <a href={article.url} target="_blank" rel="noopener noreferrer" style={{ color: colors.blue }}>
-                  {article.provider}: {article.title}
-                </a>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div>No articles available</div>
-        )}
+        {story?.coverage ? <div style={{ backgroundColor: colors.grayRed, padding: '10px', borderRadius: '10px' }}>
+            <h4>Coverage</h4>
+            <ul style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)', padding: "20px" }}>
+              {story.coverage.split('. ').map((sentence, index) => (
+                <li key={index} style={{ marginBottom: "10px", fontSize: "13px" }}>{sentence}.</li>
+              ))}
+            </ul>
+          </div> : <div></div>
+        }
       </div>
     </div>
   );
