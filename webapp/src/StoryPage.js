@@ -5,9 +5,13 @@ import { apiHost, colors } from "./config";
 
 function StoryImage(props) {
   const image_article = props.image_article;
-  const image_url = image_article.image_url || "logo.png";
-  const image_favicon = image_article.provider_favicon || "logo.png";
-  const image_article_url = image_article.url || "logo.png";
+  if (!image_article) return <div>No image available</div>;
+  const image_url = image_article.image_url;
+  const image_favicon = image_article.provider_favicon;
+  const image_article_url = image_article.url;
+  if (!image_url) return <div>No image URL available</div>;
+  if (!image_favicon) return <div>No favicon available</div>;
+  if (!image_article_url) return <div>No article URL available</div>;
 
   return (
     <div style={{ display: "flex", justifyContent: "center" }}>
@@ -175,10 +179,11 @@ export default function StoryPage() {
       style={{
         backgroundColor: colors.grayRed,
         padding: "10px",
+        margin: "10px",
         borderRadius: "10px",
       }}
     >
-      <h4>Coverage</h4>
+      <h4 style={{ margin: "0px" }}>Coverage</h4>
       <ul style={{ backgroundColor: "rgba(0, 0, 0, 0.1)", padding: "20px" }}>
         {breakIntoSentences(story.coverage).map((sentence, index) => (
           <li key={index} style={{ marginBottom: "10px", fontSize: "13px" }}>

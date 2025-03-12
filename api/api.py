@@ -145,6 +145,14 @@ async def get_story(story_id: int) -> Story:
     return next(s for s in stories if s.id == story_id)
 
 
+@app.post("/refresh")
+async def run_fetch_stories():
+    global stories
+    stories = await fetch_stories()
+    stories = sorted(stories, key=story_ranking_criterion, reverse=True)
+    return {"message": "stories refreshed successfully"}
+
+
 handler = Mangum(app)
 
 if __name__ == "__main__":

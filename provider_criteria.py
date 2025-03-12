@@ -29,9 +29,9 @@ def check_article(provider_name: str, article: Article) -> bool:
 
 
 provider_criteria: Dict[str, Dict[str, Set[str]]] = {
-    "ABC": {"blacklist_categories": {"everyday"}},
+    "ABC News": {"blacklist_categories": {"everyday"}},
     "Al Jazeera": {"blacklist_categories": {"balkans", "liveblog", "sports"}},
-    "BBC": {"blacklist_categories": {"culture", "live", "reel", "travel", "videos"}},
+    "BBC News": {"blacklist_categories": {"culture", "live", "reel", "travel", "videos"}},
     "CNN": {
         "blacklist_categories": {
             "cars",
@@ -62,7 +62,7 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
     },
     "MSNBC": {"blacklist_categories": set()},
     "NPR": {"blacklist_categories": {"podcasts", "sections", "series", "transcripts"}},
-    "SBS": {"blacklist_categories": {"audio", "food", "sport", "whats-on", "language"}},
+    "SBS News": {"blacklist_categories": {"audio", "food", "sport", "whats-on", "language"}},
     "Sky News Australia": {
         "blacklist_categories": {"stream", "listen", "podcast-episode", "video"},
         "whitelist_categories": {"skynews"},

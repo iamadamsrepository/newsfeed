@@ -140,7 +140,24 @@ def run_collector(config: dict, dry_run=False):
             if found_article:
                 continue
             db.insert_row("articles", article)
-        print(f"Wrote {len(collector.articles)}")
+        written_count = 0
+        provider_article_count = {provider.name: 0 for provider in collector.providers}
+        for article in collector.articles:
+            found_article = db.run_sql(
+                """
+            select id from articles where url = %(url)s
+            """,
+                {"url": article["url"]},
+            )
+            if found_article:
+                continue
+            db.insert_row("articles", article)
+            written_count += 1
+            provider_article_count[next(p.name for p in collector.providers if p.id == article["provider_id"])] += 1
+
+        print(f"Wrote {written_count} articles")
+        for provider, count in provider_article_count.items():
+            print(f"{provider}: {count} articles")
 
 
 if __name__ == "__main__":
