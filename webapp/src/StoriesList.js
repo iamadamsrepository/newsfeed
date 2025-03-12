@@ -27,9 +27,9 @@ function StoryListItem(props) {
           width: "100%",
         }}
       >
-        {story.image_article ? (
+        {(story.image_articles.length > 0) ? (
           <img
-            src={story.image_article.image_url}
+            src={story.image_articles[0].image_url}
             alt={story.title}
             style={{
               width: "auto",
@@ -120,9 +120,9 @@ function LeadStoryListItem(props) {
         <div>
           <h1 style={{ color: colors.red }}>{story.title}</h1>
         </div>
-        {story.image_article ? (
+        {(story.image_articles.length > 0) ? (
           <img
-            src={story.image_article.image_url}
+            src={story.image_articles[0].image_url}
             alt={story.title}
             style={{
               width: "auto",

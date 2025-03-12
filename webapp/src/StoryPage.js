@@ -69,12 +69,20 @@ export default function StoryPage() {
   const story_items = story ? (
     <ul>
       {breakIntoSentences(story.summary).map((sentence, index) => {
-        if (index === 0) {
+        if (index === 0 && story.image_articles.length > 0) {
           return [
             <li key={`story-item-${index}`} style={{ marginBottom: "10px" }}>
               {sentence}
             </li>,
-            <StoryImage image_article={story.image_article} />,
+            <StoryImage image_article={story.image_articles[0]} />,
+          ];
+        }
+        if (index === 2 && story.image_articles.length > 1) {
+          return [
+            <li key={`story-item-${index}`} style={{ marginBottom: "10px" }}>
+              {sentence}
+            </li>,
+            <StoryImage image_article={story.image_articles[1]} />,
           ];
         }
         return (
