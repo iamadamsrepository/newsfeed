@@ -53,7 +53,8 @@ def main():
             name text not null,
             url text not null,
             favicon_url text not null,
-            country text not null
+            country text not null,
+            tz text not null
         )
     """
     create_keywords_table = """

@@ -26,6 +26,7 @@ def embed_articles(db_config: dict, client: OpenAI):
     """
     )
     unembedded_articles = [ArticleRow(*a) for a in sql_out]
+    print(f"Embedding {len(unembedded_articles)} articles")
     for article in unembedded_articles:
         embedding = get_article_embedding(article, client)
         db.insert_row("article_embeddings", {"article_id": article.id, "embedding": str(embedding)})

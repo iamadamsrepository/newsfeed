@@ -23,7 +23,7 @@ lxml==5.3.1
 lxml_html_clean==0.4.1
 mangum==0.19.0
 matplotlib==3.10.1
-newspaper4k==0.9.3.1
+-e git+ssh://git@github.com/iamadamsrepository/newspaper4k.git@c5e4170918a6d1e99cb1bab6fd188ee8ed5a2afa#egg=newspaper4k
 nltk==3.9.1
 numpy==2.2.3
 openai==1.65.4

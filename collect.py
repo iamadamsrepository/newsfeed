@@ -28,6 +28,7 @@ class Collector:
         self.config.requests_params["headers"][
             "User-Agent"
         ] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:135.0) Gecko/20100101 Firefox/135.0"
+        self.config.disable_category_cache = True
         self.config.memorize_articles = False
         self.articles = []
 
@@ -148,7 +149,7 @@ def run_collector(config: dict, dry_run=False):
             select id from articles where url = %(url)s
             """,
                 {"url": article["url"]},
-            )
+            )[0][0]
             if found_article:
                 continue
             db.insert_row("articles", article)
