@@ -16,7 +16,9 @@ def main():
             subtitle text not null,
             url text not null,
             body text not null,
-            image_url text not null,
+            image_url text,
+            image_urls text,
+            dt date,
             constraint fk_provider_id foreign key (provider_id) references providers(id)
         )
     """

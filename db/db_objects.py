@@ -21,3 +21,5 @@ class ArticleRow:
     url: str
     body: str
     image_url: str
+    image_urls: str
+    date: dt.date

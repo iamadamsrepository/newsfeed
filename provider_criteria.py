@@ -32,6 +32,7 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
     "ABC News": {"blacklist_categories": {"everyday"}},
     "Al Jazeera": {"blacklist_categories": {"balkans", "liveblog", "sports"}},
     "BBC News": {"blacklist_categories": {"culture", "live", "reel", "travel", "videos"}},
+    "CBC News": {"whitelist_categories": {"news"}},
     "CNN": {
         "blacklist_categories": {
             "cars",
@@ -52,10 +53,31 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
         "whitelist_categories": {"cnn"},
     },
     "DW": {"blacklist_categories": set()},
-    "Euronews": {"blacklist_categories": {"culture", "travel"}},
+    "EuroNews": {"blacklist_categories": {"culture", "green", "tag", "travel", "video"}},
     "Financial Review": {"blacklist_categories": {"life-and-luxury", "topic"}},
+    "France24": {
+        "blacklist_categories": {"archives", "live-news", "sponsored-content", "sport", "tv-shows", "video"},
+        "whitelist_categories": set(),
+    },
     "Fox News": {
-        "blacklist_categories": {"entertainment", "lifestyle", "media", "personal-finance", "sports", "travel"}
+        "blacklist_categories": {
+            "radio",
+            "video",
+            "category",
+            "deals",
+            "media",
+            "entertainment",
+            "food-drink",
+            "health",
+            "lifestyle",
+            "opinion",
+            "sports",
+            "story",
+            "travel",
+            "weather-news",
+            "iheart",
+            "outkick",
+        }
     },
     "Hindustan Times": {
         "whitelist_categories": {"world-news"},
@@ -68,7 +90,7 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
         "whitelist_categories": {"skynews"},
     },
     "The Age": {"blacklist_categories": {"culture", "goodfood", "living", "property", "sport"}},
-    "The Associated Press": {"blacklist_categories": set()},
+    "The Associated Press": {"whitelist_categories": {"article"}},
     "The Economist": {"blacklist_categories": set()},
     "The Globe and Mail": {
         "blacklist_categories": {"arts", "drive", "life", "podcast", "real-estate", "sports", "standards-editor"}
@@ -104,6 +126,11 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
             "podcasts",
             "recipes",
             "reviews",
+            "nyregion",
+            "movies",
+            "section",
+            "live",
+            "athletic",
         }
     },
     "The Sydney Morning Herald": {

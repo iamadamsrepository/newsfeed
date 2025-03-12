@@ -3,19 +3,16 @@ TODO:
 1. H DONE improve clustering
     1.1 CANCELLED Filtering
     1.2 DONE Refine the scoring
-3. update api and web to handle links straight to story page (relys on data passed from homepage)
+3. DONE update api and web to handle links straight to story page (relys on data passed from homepage)
 4. look into local news, use sydney as poc. Other categories too
-5. write 'about' page
-6. aws mwaa
-7. H figure out tz stuff, want everything in utc, then add time ago to webapp
+5. STARTED write 'about' page
+7. DOING H figure out tz stuff, want everything in utc, then add time ago to webapp
     7.1 check data
     7.2 add time ago for articles in webapp
-8. M clustering to make daily clusters
-9. M get article keywords (named entities, geographic places, people, events)
+8. DONE M clustering to make daily clusters
+9. DONE M get article keywords (named entities, geographic places, people, events)
 10. Domain name
-11. DOING HH use newspaper4k instead of rss feeds and scraping
-12. Get summariser to check whether its actually an article
-13. Make embedding from summary not article text
+11. DONE HH use newspaper4k instead of rss feeds and scraping
 12. H add multiple pages for each provider
 ---------------------------------------------------------------------------------------------------
 13. DONE H Make story page
