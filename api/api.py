@@ -77,7 +77,7 @@ stories: list[Story] = []
 
 
 async def fetch_stories() -> list[Story]:
-    db_config = json.load(open("./config.json"))["local"]
+    db_config = json.load(open("./config.json"))["pi"]
     db = DBHandler(db_config)
     digest_id = db.run_sql("select max(digest_id) from stories")[0][0]
     db_out = [
