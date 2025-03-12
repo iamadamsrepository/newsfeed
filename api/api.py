@@ -52,7 +52,7 @@ class Story:
     summary: str
     coverage: str
     articles: List[Article]
-    image_article: Article | None = None
+    image_articles: List[Article] | None = None
 
     @property
     def n_providers(self) -> int:
@@ -106,23 +106,32 @@ async def fetch_stories() -> list[Story]:
         else:
             story = Story(*list(asdict(s).values())[:5], [article])
             stories[story.id] = story
-    return list(stories.values())
+
+    stories: list[Story] = list(stories.values())
+    for story in stories:
+        story.image_articles = select_image_articles(story)
+        story.articles = sorted(story.articles, key=article_ranking_criterion, reverse=True)
+    stories = sorted(stories, key=story_ranking_criterion, reverse=True)
+    return stories
+
+
+def article_ranking_criterion(article: Article) -> float:
+    return article.ts
 
 
 def story_ranking_criterion(story: Story) -> float:
     return story.n_providers * story.n_articles
 
 
-def select_image_article(story: Story) -> Article | None:
+def select_image_articles(story: Story) -> Article | None:
     articles_with_images = [article for article in story.articles if article.image_url]
-    return random.choice(articles_with_images) if articles_with_images else None
+    return random.sample(articles_with_images, min(3, len(articles_with_images))) if articles_with_images else None
 
 
 async def fetch_stories_loop():
     global stories
     while True:
         stories = await fetch_stories()
-        stories = sorted(stories, key=story_ranking_criterion, reverse=True)
         print("Fetched stories")
         await asyncio.sleep(600)
 
@@ -134,9 +143,6 @@ async def startup_event():
 
 @app.get("/stories")
 async def get_stories() -> list[Story]:
-    for story in stories:
-        story: Story
-        story.image_article = select_image_article(story)
     return stories
 
 
@@ -149,7 +155,6 @@ async def get_story(story_id: int) -> Story:
 async def run_fetch_stories():
     global stories
     stories = await fetch_stories()
-    stories = sorted(stories, key=story_ranking_criterion, reverse=True)
     return {"message": "stories refreshed successfully"}
 
 
