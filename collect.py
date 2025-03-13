@@ -255,7 +255,7 @@ class Collector:
 
         results_df = pd.DataFrame(results).T
         today = dt.date.today().isoformat()
-        results_df.to_csv(f"collection_results_{today}.csv", index=False, lineterminator="\n")
+        results_df.to_csv(f"collection_results_{today}.csv", lineterminator="\n")
         print(f"Results saved to collection_results_{today}.csv")
         print("Finished Collector")
 
