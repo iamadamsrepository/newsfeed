@@ -27,9 +27,9 @@ function StoryListItem(props) {
           width: "100%",
         }}
       >
-        {(story.image_articles.length > 0) ? (
+        {(story?.images?.length > 0) ? (
           <img
-            src={story.image_articles[0].image_url}
+            src={story.images[0].url}
             alt={story.title}
             style={{
               width: "auto",
@@ -120,9 +120,9 @@ function LeadStoryListItem(props) {
         <div>
           <h1 style={{ color: colors.red }}>{story.title}</h1>
         </div>
-        {(story.image_articles.length > 0) ? (
+        {(story?.images?.length > 0) ? (
           <img
-            src={story.image_articles[0].image_url}
+            src={story.images[0].url}
             alt={story.title}
             style={{
               width: "auto",
@@ -174,7 +174,7 @@ export default function StoryItems(props) {
         {stories.length > 0 ? (
           <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
             {stories.map((story, index) => (
-              <li key={story.id}>
+              <li key={index}>
                 {index === 0 ? (
                   <LeadStoryListItem story={story} />
                 ) : (

@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { formatDate, breakIntoSentences } from "./utils";
 import { apiHost, colors } from "./config";
 
 function StoryImage(props) {
-  const image_article = props.image_article;
-  if (!image_article) return <div>No image available</div>;
-  const image_url = image_article.image_url;
-  const image_favicon = image_article.provider_favicon;
-  const image_article_url = image_article.url;
+  const image = props.image;
+  if (!image) return <div>No image available</div>;
+  const image_url = image.url;
+  const image_favicon = image.provider.favicon_url;
+  const image_article_url = image.article_url;
   if (!image_url) return <div>No image URL available</div>;
   if (!image_favicon) return <div>No favicon available</div>;
   if (!image_article_url) return <div>No article URL available</div>;
@@ -62,27 +61,28 @@ export default function StoryPage() {
       const response = await fetch(apiHost + `/story/${id}`);
       const data = await response.json();
       setStory(data);
+      console.log(data);
     };
     fetchStory();
   }, [id]);
 
   const story_items = story ? (
     <ul>
-      {breakIntoSentences(story.summary).map((sentence, index) => {
-        if (index === 0 && story.image_articles.length > 0) {
+      {story.summary.map((sentence, index) => {
+        if (index === 0 && story.images?.length > 0) {
           return [
             <li key={`story-item-${index}`} style={{ marginBottom: "10px" }}>
               {sentence}
             </li>,
-            <StoryImage image_article={story.image_articles[0]} />,
+            <StoryImage image={story.images[0]} />,
           ];
         }
-        if (index === 2 && story.image_articles.length > 1) {
+        if (index === 2 && story.images.length > 1) {
           return [
             <li key={`story-item-${index}`} style={{ marginBottom: "10px" }}>
               {sentence}
             </li>,
-            <StoryImage image_article={story.image_articles[1]} />,
+            <StoryImage image={story.images[1]} />,
           ];
         }
         return (
@@ -135,11 +135,11 @@ export default function StoryPage() {
               rel="noopener noreferrer"
             >
               <img
-                src={article.provider_favicon}
-                alt={article.provider}
+                src={article.provider.favicon_url}
+                alt={article.provider.name}
                 style={{ width: "16px", height: "16px", marginRight: "5px" }}
               />
-              <p>{article.provider}</p>
+              <p>{article.provider.name}</p>
             </a>
             <a
               style={{
@@ -168,7 +168,7 @@ export default function StoryPage() {
                 color: colors.lightGray,
               }}
             >
-              {formatDate(article.ts)}
+              {article.date}
             </p>
           </div>
           <p style={{ margin: "5px", fontSize: "13px" }}>{article.title}</p>
@@ -193,7 +193,7 @@ export default function StoryPage() {
     >
       <h4 style={{ margin: "0px" }}>Coverage</h4>
       <ul style={{ backgroundColor: "rgba(0, 0, 0, 0.1)", padding: "20px" }}>
-        {breakIntoSentences(story.coverage).map((sentence, index) => (
+        {story.coverage.map((sentence, index) => (
           <li key={index} style={{ marginBottom: "10px", fontSize: "13px" }}>
             {sentence}
           </li>
