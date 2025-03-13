@@ -4,10 +4,12 @@ import json
 import re
 import threading
 import time
-from typing import List
+import warnings
 from zoneinfo import ZoneInfo
 
 import numpy as np
+import pandas as pd
+import PIL
 import requests
 from newspaper import Config, Source
 from newspaper.article import Article, ArticleDownloadState
@@ -43,27 +45,9 @@ def has_transparency(image: Image):
     return False
 
 
-def should_keep_image(url: str):
-    try:
-        response = requests.get(url, allow_redirects=True, timeout=5)
-        content_type = response.headers.get("Content-Type", "")
-        if not content_type.startswith("image/"):
-            return False
-        image = Image.open(io.BytesIO(response.content))
-        if image.size[0] < 100 or image.size[1] < 100:
-            return False
-        if has_transparency(image):
-            return False
-        if is_logo_by_colors(image):
-            return False
-        return True
-    except requests.RequestException:
-        return False
-
-
 class Collector:
-    def __init__(self, providers: List[ProviderRow]):
-        self.providers = providers
+    def __init__(self, db: DBHandler):
+        self.db = db
         self.config = Config()
         self.config.allow_binary_content = True  # Allow binary content
         self.config.ignored_content_types_defaults = [
@@ -78,75 +62,78 @@ class Collector:
         ] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:135.0) Gecko/20100101 Firefox/135.0"
         self.config.disable_category_cache = True
         self.config.memorize_articles = False
-        self.articles = []
 
-    def collect(self):
-        self.sources: dict[str, Source] = {}
+        self.download_counter = 0
+        self.write_counter = 0
+        self.image_counter = 0
 
-        def build_source(provider: ProviderRow):
-            s = Source(provider.url, config=self.config)
-            s.clean_memo_cache()
-            s.build(only_homepage=True)
-            self.sources[provider.name] = s
+    def _get_providers(self) -> list[ProviderRow]:
+        sql_out = self.db.run_sql(
+            """
+        select * from providers
+    """
+        )
+        return [ProviderRow(*p) for p in sql_out]
 
-        threads: list[threading.Thread] = [threading.Thread(target=build_source, args=(p,)) for p in self.providers]
+    def _get_article_urls(self) -> list[str]:
+        sql_out = self.db.run_sql(
+            """
+        select url from articles
+    """
+        )
+        return [url for url, in sql_out]
+
+    def _build_source(self, provider: ProviderRow, sources):
+        source = Source(provider.url, config=self.config)
+        source.clean_memo_cache()
+        source.build(only_homepage=True)
+        sources[provider.name] = source
+
+    def _build_sources(self, providers: list[ProviderRow]) -> dict[str, Source]:
+        sources = {}
+        threads: list[threading.Thread] = [
+            threading.Thread(target=self._build_source, args=(p, sources)) for p in providers
+        ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        return sources
+
+    def _format_source_article_urls(self, source: Source):
+        for article in source.articles:
+            article.url = article.url.split("?")[0]
+            article.url = article.url.split("#")[0]
+
+    def _download_source_articles(self, source: Source):
+        keep_articles = []
+        for article in source.articles:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                article.download()
+            if article.download_state == ArticleDownloadState.FAILED_RESPONSE:
+                continue
+            try:
+                article.parse()
+            except Exception:
+                time.sleep(2)
+                article.parse()
+            keep_articles.append(article)
+            self.download_counter += 1
+            print(self.download_counter, end="\r")
+            time.sleep(0.1)
+        source.articles = keep_articles
+
+    def _download_articles(self, sources: dict[str, Source]):
+        threads: list[threading.Thread] = [
+            threading.Thread(target=self._download_source_articles, args=(s,)) for s in sources.values()
+        ]
         for thread in threads:
             thread.start()
         for thread in threads:
             thread.join()
 
-        def download_articles(provider: ProviderRow):
-            source = self.sources[provider.name]
-            for article in source.articles:
-                if self.article_acceptance_criterion(provider, article):
-                    # print(f"Accepted: {article.title}, {article.url}")
-                    timezone = TIMEZONES.get(provider.name, TIMEZONES[provider.country])
-                    date = article.publish_date.date()
-                    if article.publish_date.time() == dt.time(0, 0):
-                        ts = article.publish_date.replace(hour=12, tzinfo=timezone).astimezone(ZoneInfo("UTC"))
-                    else:
-                        ts = article.publish_date.replace(tzinfo=timezone).astimezone(ZoneInfo("UTC"))
-                    self.articles.append(
-                        {
-                            "provider_id": provider.id,
-                            "date": date,
-                            "ts": ts,
-                            "title": article.title,
-                            "url": article.url.split("?")[0],
-                            "body": re.sub(r"\s+", " ", article.text),
-                            "subtitle": article.meta_description,
-                            "image_url": article.top_image,
-                            "image_urls": json.dumps([i for i in article.images if should_keep_image(i)]),
-                        }
-                    )
-
-        threads = []
-        for provider in self.providers:
-            source = self.sources[provider.name]
-            print(f"{provider.name},\t{len(source.articles)} articles\t{provider.url}")
-            thread = threading.Thread(target=download_articles, args=(provider,))
-            thread.start()
-            threads.append(thread)
-        for thread in threads:
-            thread.join()
-
-    def article_acceptance_criterion(self, provider: ProviderRow, article: Article) -> bool:
-        print(article.url)
-        if not article.url:
-            return False
-        if "#" in article.url:
-            return False
-        if not check_article(provider.name, article):
-            return False
-        article.download()
-        time.sleep(0.1)
-        if article.download_state == ArticleDownloadState.FAILED_RESPONSE:
-            return False
-        try:
-            article.parse()
-        except Exception:
-            time.sleep(2)
-            article.parse()
+    def _check_downloaded_article(self, article: Article) -> bool:
         if not article.publish_date:
             return False
         if article.publish_date.date() < dt.date.today() - dt.timedelta(days=3):
@@ -155,56 +142,126 @@ class Collector:
             return False
         if len(article.text.split()) < 18:
             return False
-        return check_article(provider.name, article)
+        return True
 
-    def print_article(self, article: Article):
-        print(f"Date: {article.publish_date}")
-        print(f"Title: {article.title}")
-        print(f"Len: {len(article.text.split())}")
-        print(f"Text: {article.text[:150]}...")
-        print(f"Description: {article.meta_description}")
-        print(f"Url: {article.url}")
-        print("-------------------------------")
+    def _article_to_dict(self, provider: ProviderRow, article: Article) -> dict:
+        timezone = TIMEZONES.get(provider.name, TIMEZONES[provider.country])
+        date = article.publish_date.date()
+        if article.publish_date.time() == dt.time(0, 0):
+            ts = article.publish_date.replace(hour=12, tzinfo=timezone).astimezone(ZoneInfo("UTC"))
+        else:
+            ts = article.publish_date.replace(tzinfo=timezone).astimezone(ZoneInfo("UTC"))
+        image_urls = [i for i in article.images[:8] if self._check_image(i)]
+        return {
+            "provider_id": provider.id,
+            "date": date,
+            "ts": ts,
+            "title": article.title,
+            "url": article.url,
+            "body": re.sub(r"\s+", " ", article.text),
+            "subtitle": article.meta_description,
+            "image_url": article.top_image,
+            "image_urls": json.dumps(image_urls),
+        }
 
+    def _check_image(self, url: str) -> bool:
+        try:
+            self.image_counter += 1
+            print(self.image_counter, end="\r")
+            response = requests.get(url, allow_redirects=True, timeout=5)
+            content_type = response.headers.get("Content-Type", "")
+            if not content_type.startswith("image/"):
+                return False
+            image = Image.open(io.BytesIO(response.content))
+            if image.size[0] < 100 or image.size[1] < 100:
+                return False
+            if has_transparency(image):
+                return False
+            if is_logo_by_colors(image):
+                return False
+            return True
+        except (requests.RequestException, PIL.UnidentifiedImageError):
+            return False
 
-def run_collector(config: dict, dry_run=False):
-    db = DBHandler(config["pi"])
-    providers = [
-        ProviderRow(*p)
-        for p in db.run_sql(
-            """
-        select * from providers
-    """
-        )
-    ]
-    collector = Collector(providers)
-    collector.collect()
-    print(f"\n\nCollected {len(collector.articles)} Articles")
-    for provider in collector.providers:
-        provider_articles = [article for article in collector.articles if article["provider_id"] == provider.id]
-        print(f"{provider.name}: {len(provider_articles)} articles")
+    def _format_source_articles_for_db(self, provider: ProviderRow, source: Source, formatted_articles: list[dict]):
+        for article in source.articles:
+            formatted_articles.append((provider.name, self._article_to_dict(provider, article)))
 
-    if not dry_run:
-        written_count = 0
-        provider_article_count = {provider.name: 0 for provider in collector.providers}
-        for article in collector.articles:
-            found_article = db.run_sql(
-                """
-            select id from articles where url = %(url)s
-            """,
-                {"url": article["url"]},
-            )[0][0]
-            if found_article:
-                continue
-            db.insert_row("articles", article)
-            written_count += 1
-            provider_article_count[next(p.name for p in collector.providers if p.id == article["provider_id"])] += 1
+    def _format_articles_for_db(self, providers: list[ProviderRow], sources: dict[str, Source]) -> list[dict]:
+        threads: list[threading.Thread] = []
+        formatted_articles = []
+        for provider_name, source in sources.items():
+            provider = next(p for p in providers if p.name == provider_name)
+            threads.append(
+                threading.Thread(
+                    target=self._format_source_articles_for_db, args=(provider, source, formatted_articles)
+                )
+            )
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        return formatted_articles
 
-        print(f"\n\nWrote {written_count} articles")
-        for provider, count in provider_article_count.items():
-            print(f"{provider}: {count} articles")
+    def collect(self):
+        print("Running Collector")
+        results = {}
+
+        providers = self._get_providers()
+        print(f"Pulled {len(providers)} providers")
+        article_urls = self._get_article_urls()
+        print(f"Pulled {len(article_urls)} article urls")
+
+        sources = self._build_sources(providers)
+        for provider, source in sources.items():
+            results[provider] = {"pulled_from_homepage": len(source.articles)}
+        print(f"Built {len(sources)} sources")
+
+        for provider, source in sources.items():
+            self._format_source_article_urls(source)
+            source.articles = [article for article in source.articles if article.url not in article_urls]
+            results[provider]["new_articles"] = len(source.articles)
+        print(f"Filtered existing articles, {sum(len(source.articles) for source in sources.values())} remaining")
+
+        for provider, source in sources.items():
+            source.articles = [article for article in source.articles if check_article(provider, article)]
+            results[provider]["accepted_articles"] = len(source.articles)
+        print(f"Filtered by black/white lists, {sum(len(source.articles) for source in sources.values())} remaining")
+
+        print(f"Downloading {sum(len(source.articles) for source in sources.values())} articles")
+        self._download_articles(sources)
+        for provider, source in sources.items():
+            results[provider]["downloaded_articles"] = len(source.articles)
+        print(f"Downloaded {sum(len(source.articles) for source in sources.values())} articles")
+
+        for provider, source in sources.items():
+            source.articles = [article for article in source.articles if self._check_downloaded_article(article)]
+            results[provider]["final"] = len(source.articles)
+        print(f"Keeping {sum([len(source.articles) for source in sources.values()])} articles after article checks")
+
+        print("Formatting for DB and checking images")
+        articles = self._format_articles_for_db(providers, sources)
+
+        print(f"Writing {len(articles)} articles to DB")
+        for provider, article in articles:
+            self.db.insert_row("articles", article)
+            if results[provider].get("written"):
+                results[provider]["written"] += 1
+            else:
+                results[provider]["written"] = 1
+            self.write_counter += 1
+            print(self.write_counter, end="\r")
+        print(f"Wrote {len(articles)} articles")
+
+        results_df = pd.DataFrame(results).T
+        today = dt.date.today().isoformat()
+        results_df.to_csv(f"collection_results_{today}.csv", index=False, lineterminator="\n")
+        print(f"Results saved to collection_results_{today}.csv")
+        print("Finished Collector")
 
 
 if __name__ == "__main__":
     config = json.load(open("./config.json"))
-    run_collector(config, dry_run=False)
+    db = DBHandler(config["pi"])
+    collector = Collector(db)
+    collector.collect()
