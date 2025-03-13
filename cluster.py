@@ -39,8 +39,19 @@ STORY_TITLE_AND_SUMMARY_RESPONSE_FORMAT = {
                 },
                 "keywords": {
                     "type": "array",
-                    "description": "A list of named entities including names, places, events and institutions related to the article.",
-                    "items": {"type": "string"},
+                    "description": "A list of up to 10 named entities relating to the story, such as names, places, events or institutions.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "keyword": {"type": "string", "description": "keyword"},
+                            "type": {
+                                "type": "string",
+                                "enum": ["PERSON", "PLACE", "EVENT", "INSTITUTION", "CONCEPT", "OTHER"],
+                            },
+                        },
+                        "required": ["keyword", "type"],
+                        "additionalProperties": False,
+                    },
                 },
             },
             "required": ["story_summary", "coverage_summary", "headline", "keywords"],
@@ -156,11 +167,11 @@ def sanitize_keyword(keyword: str) -> str | None:
 
 def write_story_to_db(
     db: DBHandler,
-    articles: List[ArticleInfo],
+    articles: list[ArticleInfo],
     headline: str,
     summary: str,
     coverage: str,
-    keywords: List[str],
+    keywords: list[dict[str, str]],
     digest_id: int,
     digest_description: str,
 ):
@@ -178,12 +189,13 @@ def write_story_to_db(
     story_id = db.run_sql("select max(id) from stories")[0][0]
     for article in articles:
         db.insert_row("story_articles", {"story_id": story_id, "article_id": article.id})
-    for keyword in keywords:
-        keyword_id = db.run_sql("select id from keywords where keyword = %s", (keyword,))
+    for keyword_dict in keywords:
+        keyword, _type = keyword_dict["keyword"], keyword_dict["type"]
+        keyword_id = db.run_sql("select id from keywords where keyword = %s and type = %s", (keyword, _type))
         if keyword_id:
             keyword_id = keyword_id[0][0]
         else:
-            db.insert_row("keywords", {"keyword": keyword})
+            db.insert_row("keywords", {"keyword": keyword, "type": _type})
             keyword_id = db.run_sql("select max(id) from keywords")[0][0]
         db.insert_row("story_keywords", {"story_id": story_id, "keyword_id": keyword_id})
 
@@ -216,7 +228,6 @@ def cluster_articles(db_config: dict, client: OpenAI, dry_run=False):
     digest_description = dt.date.today().strftime(f"%Y%m%d-{digest_id}")
     for articles in stories:
         headline, story_summary, coverage_summary, keywords = get_story_headline_and_summary(articles, client)
-        keywords = [sk for k in keywords if (sk := sanitize_keyword(k))]
         write_story_to_db(
             db, articles, headline, story_summary, coverage_summary, keywords, digest_id, digest_description
         )

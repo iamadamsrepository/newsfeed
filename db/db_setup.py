@@ -62,7 +62,9 @@ def main():
     create_keywords_table = """
         create table if not exists keywords (
             id serial primary key,
-            keyword text not null unique
+            keyword text not null,
+            type text not null,
+            constraint unique_keyword unique (keyword, type)
         )
     """
     create_story_keywords_table = """
