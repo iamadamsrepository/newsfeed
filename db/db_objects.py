@@ -23,3 +23,14 @@ class ArticleRow:
     image_url: str
     image_urls: str
     date: dt.date
+
+
+@dataclass
+class StoryRow:
+    id: int
+    ts: dt.datetime
+    title: str
+    summary: str
+    coverage: str
+    digest_id: int
+    digest_description: str

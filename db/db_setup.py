@@ -76,14 +76,22 @@ def main():
             primary key (story_id, keyword_id)
         )
     """
+    create_story_embeddings_table = """ 
+        create table if not exists story_embeddings (
+            story_id int not null,
+            embedding text not null,
+            constraint fk_story_id foreign key (story_id) references stories(id),
+            primary key (story_id)
+        )
+    """
     db.run_sql_no_return(create_providers_table)
     db.run_sql_no_return(create_articles_table)
     db.run_sql_no_return(create_article_embeddings_table)
-    # db.run_sql_no_return(create_article_summaries_table)
     db.run_sql_no_return(create_stories_table)
     db.run_sql_no_return(create_story_articles_table)
     db.run_sql_no_return(create_keywords_table)
     db.run_sql_no_return(create_story_keywords_table)
+    db.run_sql_no_return(create_story_embeddings_table)
     providers = pd.read_csv("./db/providers.csv")
     for _, row in providers.iterrows():
         provider_exists_query = "select exists(select 1 from providers where name = %s)"
