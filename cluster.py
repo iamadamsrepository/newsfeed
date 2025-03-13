@@ -13,7 +13,9 @@ from openai.types.chat.chat_completion import ChatCompletion
 
 from db.db_connection import DBHandler
 
-ArticleInfo = namedtuple("ArticleInfo", ["id", "url", "ts", "title", "subtitle", "body", "provider", "embedding"])
+ArticleInfo = namedtuple(
+    "ArticleInfo", ["id", "url", "ts", "title", "subtitle", "body", "provider", "country", "embedding"]
+)
 
 
 def get_story_headline_and_summary(story: List[ArticleInfo], client: OpenAI, retries=0) -> Tuple[str, str, List[str]]:
@@ -106,17 +108,17 @@ def get_article_embeddings(db: DBHandler) -> list[ArticleInfo]:
     sql_out = db.run_sql(
         f"""
         select a.id, a.url, a.ts, a.title, a.subtitle, a.body,
-        p.name, e.embedding
+        p.name, p.country, e.embedding
         from articles a
         left join article_embeddings e
         on a.id = e.article_id
         left join providers p
         on a.provider_id = p.id
-        where a.ts > '{(dt.datetime.now() - dt.timedelta(hours=72)).strftime("%Y-%m-%d %H:%M:%S")}'
+        where a.ts > '{(dt.datetime.now() - dt.timedelta(hours=48)).strftime("%Y-%m-%d %H:%M:%S")}'
         and e.embedding is not null
     """
     )
-    return [ArticleInfo(a[0], a[1], a[2], a[3], a[4], a[5], a[6], eval(a[7])) for a in sql_out]
+    return [ArticleInfo(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], eval(a[8])) for a in sql_out]
 
 
 def cluster_into_stories(articles: List[ArticleInfo]) -> List[List[ArticleInfo]]:
@@ -125,8 +127,10 @@ def cluster_into_stories(articles: List[ArticleInfo]) -> List[List[ArticleInfo]]
     stories: list[list[ArticleInfo]] = []
     for i in range(len(np.unique(labels))):
         cluster_articles = [a for a, label in zip(articles, labels) if label == i]
+        len(cluster_articles)
         n_providers = len(set(a.provider for a in cluster_articles))
-        if n_providers >= 3:
+        n_countries = len(set(a.country for a in cluster_articles))
+        if (n_providers >= 5) or (n_countries == 1 and n_providers >= 3) or (n_countries == 2 and n_providers >= 4):
             stories.append(cluster_articles)
         elif len(cluster_articles) >= 6 or n_providers == 1:
             ...  # This may be a signal of issue with the filtering when collecting articles
@@ -180,7 +184,7 @@ def write_story_to_db(
 
 def print_story(articles: List[ArticleInfo], headline: str, summary: str, coverage: str, keywords: List[str]):
     n_providers = len(set(a.provider for a in articles))
-    print("====================================")
+    print("\n====================================\n")
     print(
         f"Wrote story '{headline}' from {len(articles)} articles and {n_providers} providers:\n{keywords=}\n{summary=}\n{coverage=}"
     )
