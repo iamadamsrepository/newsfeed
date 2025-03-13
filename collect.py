@@ -89,10 +89,14 @@ class Collector:
             thread.join()
         return sources
 
+    def _format_url(self, url: str) -> str:
+        url = url.split("?")[0]
+        url = url.split("#")[0]
+        return url
+
     def _format_source_article_urls(self, source: Source):
         for article in source.articles:
-            article.url = article.url.split("?")[0]
-            article.url = article.url.split("#")[0]
+            article.url = self._format_url(article.url)
 
     def _download_source_articles(self, source: Source):
         keep_articles = []
@@ -134,7 +138,7 @@ class Collector:
         return True
 
     @staticmethod
-    def _is_logo_by_colors(image: Image, color_threshold=10):
+    def _is_logo_by_colors(image: Image, color_threshold=100):
         colors = np.unique(np.array(image.convert("RGB")).reshape(-1, 3), axis=0)
         return len(colors) < color_threshold  # If very few colors, likely a logo
 
@@ -151,7 +155,8 @@ class Collector:
             ts = article.publish_date.replace(hour=12, tzinfo=timezone).astimezone(ZoneInfo("UTC"))
         else:
             ts = article.publish_date.replace(tzinfo=timezone).astimezone(ZoneInfo("UTC"))
-        image_urls = [i for i in article.images[:8] if self._check_image(i)]
+        image_urls = {self._format_url(url) for url in article.images[:8]}
+        image_urls = [i for i in image_urls if self._check_image(i)]
         return {
             "provider_id": provider.id,
             "date": date,
@@ -168,7 +173,7 @@ class Collector:
         try:
             self.image_counter += 1
             print(self.image_counter, end="\r")
-            response = requests.get(url, allow_redirects=True, timeout=5)
+            response = requests.get(url, allow_redirects=True, timeout=3)
             content_type = response.headers.get("Content-Type", "")
             if not content_type.startswith("image/"):
                 return False
@@ -215,7 +220,9 @@ class Collector:
         sources = self._build_sources(providers)
         for provider, source in sources.items():
             results[provider] = {"pulled_from_homepage": len(source.articles)}
-        print(f"Built {len(sources)} sources")
+        print(
+            f"Built {len(sources)} sources, and found {sum(len(source.articles) for source in sources.values())} articles"
+        )
 
         for provider, source in sources.items():
             self._format_source_article_urls(source)
