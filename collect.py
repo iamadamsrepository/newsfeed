@@ -34,17 +34,6 @@ TIMEZONES = {
 TIMEZONES: dict[str, ZoneInfo] = {k: ZoneInfo(v) for k, v in TIMEZONES.items()}
 
 
-def is_logo_by_colors(image: Image, color_threshold=10):
-    colors = np.unique(np.array(image.convert("RGB")).reshape(-1, 3), axis=0)
-    return len(colors) < color_threshold  # If very few colors, likely a logo
-
-
-def has_transparency(image: Image):
-    if image.mode == "RGBA":
-        return image.getchannel("A").getextrema()[0] < 255  # Alpha channel check
-    return False
-
-
 class Collector:
     def __init__(self, db: DBHandler):
         self.db = db
@@ -144,6 +133,17 @@ class Collector:
             return False
         return True
 
+    @staticmethod
+    def _is_logo_by_colors(image: Image, color_threshold=10):
+        colors = np.unique(np.array(image.convert("RGB")).reshape(-1, 3), axis=0)
+        return len(colors) < color_threshold  # If very few colors, likely a logo
+
+    @staticmethod
+    def _has_transparency(image: Image):
+        if image.mode == "RGBA":
+            return image.getchannel("A").getextrema()[0] < 255  # Alpha channel check
+        return False
+
     def _article_to_dict(self, provider: ProviderRow, article: Article) -> dict:
         timezone = TIMEZONES.get(provider.name, TIMEZONES[provider.country])
         date = article.publish_date.date()
@@ -175,9 +175,9 @@ class Collector:
             image = Image.open(io.BytesIO(response.content))
             if image.size[0] < 100 or image.size[1] < 100:
                 return False
-            if has_transparency(image):
+            if self._has_transparency(image):
                 return False
-            if is_logo_by_colors(image):
+            if self._is_logo_by_colors(image):
                 return False
             return True
         except (requests.RequestException, PIL.UnidentifiedImageError):
