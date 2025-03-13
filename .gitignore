@@ -19,6 +19,8 @@ dags/
 config.json
 
 .python-version
-db/config.json
-api/config.json
+
+*/config.json
 config.json
+
+collection_results_*
