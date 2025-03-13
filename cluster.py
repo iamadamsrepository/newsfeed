@@ -17,61 +17,72 @@ ArticleInfo = namedtuple(
     "ArticleInfo", ["id", "url", "ts", "title", "subtitle", "body", "provider", "country", "embedding"]
 )
 
+STORY_TITLE_AND_SUMMARY_RESPONSE_FORMAT = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "story_title_and_summary",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "story_summary": {
+                    "type": "string",
+                    "description": "Up to 150 words to summarise the story based on the articles.",
+                },
+                "coverage_summary": {
+                    "type": "string",
+                    "description": "Up to 100 words to describe the ways the different articles told the story.",
+                },
+                "headline": {
+                    "type": "string",
+                    "description": "Up to 15 words to headline the story based on the articles.",
+                },
+                "keywords": {
+                    "type": "array",
+                    "description": "A list of named entities including names, places, events and institutions related to the article.",
+                    "items": {"type": "string"},
+                },
+            },
+            "required": ["story_summary", "coverage_summary", "headline", "keywords"],
+            "additionalProperties": False,
+        },
+    },
+}
+
+STORY_TITLE_AND_SUMMARY_SYSTEM_MESSAGE = {
+    "role": "system",
+    "content": "You take in headlines and article text from a collection of articles about a news story. "
+    "You need to provide a headline, story summary, coverage summary and keywords for the story. "
+    "The headline should be up to 15 words, the story summary up to 150 words, the coverage summary up to 100 words, and up to 10 keywords. "
+    "The headline should be a brief, attention-grabbing title for the story."
+    "The story summary should be a concise overview of the story. Include the most important information, and specify dates of specific events. "
+    "The coverage summary should compare and contrast the way the story is told between the articles. "
+    "The keywords should be names, places, events and institutions related to the story.",
+}
+
+
+def article_ranking_key(article: ArticleInfo):
+    return article.ts
+
+
+def cluster_criterion(articles: List[ArticleInfo]) -> bool:
+    n_providers = len(set(a.provider for a in articles))
+    n_countries = len(set(a.country for a in articles))
+    return (n_providers >= 5) or (n_countries == 1 and n_providers >= 3) or (n_countries == 2 and n_providers >= 4)
+
 
 def get_story_headline_and_summary(story: List[ArticleInfo], client: OpenAI, retries=0) -> Tuple[str, str, List[str]]:
-    response_format = {
-        "type": "json_schema",
-        "json_schema": {
-            "name": "story_title_and_summary",
-            "strict": True,
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "story_summary": {
-                        "type": "string",
-                        "description": "Up to 150 words to summarise the story based on the articles.",
-                    },
-                    "coverage_summary": {
-                        "type": "string",
-                        "description": "Up to 100 words to describe the ways the different articles told the story.",
-                    },
-                    "headline": {
-                        "type": "string",
-                        "description": "Up to 15 words to headline the story based on the articles.",
-                    },
-                    "keywords": {
-                        "type": "array",
-                        "description": "A list of named entities including names, places, events and institutions related to the article.",
-                        "items": {"type": "string"},
-                    },
-                },
-                "required": ["story_summary", "coverage_summary", "headline", "keywords"],
-                "additionalProperties": False,
-            },
-        },
-    }
-    if len(story) > 20:
-        message_articles = sorted(story, key=lambda x: x.ts, reverse=True)[:20]
-        # TODO better criterion including provider variety
-    else:
-        message_articles = story
+    response_format = STORY_TITLE_AND_SUMMARY_RESPONSE_FORMAT
+    message_articles = sorted(story, key=article_ranking_key, reverse=True)
+    message_articles = message_articles[:20]  # Limit to 20 articles
     messages = [
-        {
-            "role": "system",
-            "content": "You take in headlines and article text from a collection of articles about a news story. "
-            "You need to provide a headline, story summary, coverage summary and keywords for the story. "
-            "The headline should be up to 15 words, the story summary up to 150 words, the coverage summary up to 100 words, and up to 10 keywords. "
-            "The headline should be a brief, attention-grabbing title for the story."
-            "The story summary should be a concise overview of the story. Include the most important information, and specify dates of specific events. "
-            "The coverage summary should compare and contrast the way the story is told between the articles. "
-            "The keywords should be names, places, events and institutions related to the story.",
-        },
+        STORY_TITLE_AND_SUMMARY_SYSTEM_MESSAGE,
         {
             "role": "user",
-            "content": "Here are the headlines and summaries of the articles about the story:\n\n"
-            + "\n\n".join(
+            "content": "Here are the headlines and summaries of the articles about the story:\n"
+            + "\n".join(
                 [
-                    f"{a.provider}\t{a.ts.strftime('%Y-%m-%d')}\n{a.title}\n{a.subtitle}\n{' '.join(a.body.split()[:200])}"
+                    f"{a.ts.strftime('%Y-%m-%d')}\t{a.provider} ({a.country})\n{a.title}\n{a.subtitle}\n{' '.join(a.body.split()[:200])}"
                     for a in message_articles
                 ]
             ),
@@ -99,7 +110,7 @@ def get_story_headline_and_summary(story: List[ArticleInfo], client: OpenAI, ret
     except (AssertionError, json.JSONDecodeError):
         print("Retrying")
         if retries == 2:
-            raise ValueError
+            raise
         return get_story_headline_and_summary(story, client, retries + 1)
     return content["headline"], content["story_summary"], content["coverage_summary"], content["keywords"]
 
@@ -127,13 +138,8 @@ def cluster_into_stories(articles: List[ArticleInfo]) -> List[List[ArticleInfo]]
     stories: list[list[ArticleInfo]] = []
     for i in range(len(np.unique(labels))):
         cluster_articles = [a for a, label in zip(articles, labels) if label == i]
-        len(cluster_articles)
-        n_providers = len(set(a.provider for a in cluster_articles))
-        n_countries = len(set(a.country for a in cluster_articles))
-        if (n_providers >= 5) or (n_countries == 1 and n_providers >= 3) or (n_countries == 2 and n_providers >= 4):
+        if cluster_criterion(cluster_articles):
             stories.append(cluster_articles)
-        elif len(cluster_articles) >= 6 or n_providers == 1:
-            ...  # This may be a signal of issue with the filtering when collecting articles
     return stories
 
 
