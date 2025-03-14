@@ -1,8 +1,8 @@
 import asyncio
 import datetime as dt
 import json
-import random
-from dataclasses import dataclass, fields
+from collections import defaultdict
+from dataclasses import dataclass
 
 import nltk
 import uvicorn
@@ -12,7 +12,7 @@ from mangum import Mangum
 from nltk.tokenize import sent_tokenize
 
 from api.db_connection import DBHandler
-from db.db_objects import ArticleRow, ProviderRow, StoryRow
+from db.db_objects import ArticleRow, ImageRow, ProviderRow, StoryRow
 
 nltk.download("punkt_tab")
 
@@ -28,8 +28,6 @@ class Provider:
 @dataclass
 class Image:
     url: str
-    article_url: str
-    provider: Provider
 
 
 @dataclass
@@ -82,43 +80,53 @@ async def fetch_stories() -> tuple[list[Story], dict[int, Story]]:
     db_config = json.load(open("./config.json"))["pi"]
     db = DBHandler(db_config)
     digest_id = db.run_sql("select max(digest_id) from stories")[0][0]
-    db_out = [
-        i
-        for i in db.run_sql(
+    stories: dict[int, StoryRow] = {
+        (sr := StoryRow(*s)).id: sr
+        for s in db.run_sql(
             f"""
-                select s.*, a.*, p.*
-                from story_articles sa
-                left join stories s
-                on sa.story_id = s.id
-                left join articles a
-                on sa.article_id = a.id
-                left join providers p
-                on a.provider_id = p.id
-                where s.digest_id = {digest_id}
-            """
+        select s.*
+        from stories s
+        where s.digest_id = {digest_id}
+        """
         )
-    ]
-    stories: dict[int, StoryRow] = {}
-    story_articles: dict[int, list[ArticleRow]] = {}
-    providers: dict[int, ProviderRow] = {}
-    for s in db_out:
-        ls, la = len(fields(StoryRow)), len(fields(ArticleRow))  # len(fields(ProviderRow))
-        story = StoryRow(*s[:ls])
-        article = ArticleRow(*s[ls : la + ls])
-        provider = ProviderRow(*s[la + ls :])
+    }
+    providers: dict[int, ProviderRow] = {
+        (pr := ProviderRow(*p)).id: pr
+        for p in db.run_sql(
+            """
+        select p.*
+        from providers p
+        """
+        )
+    }
+    db_out = db.run_sql(
+        f"""
+        select s.id, a.*
+        from stories s
+        left join story_articles sa
+        on s.id = sa.story_id
+        left join articles a
+        on sa.article_id = a.id
+        where s.digest_id = {digest_id}
+        """
+    )
+    story_articles: dict[int, list[ArticleRow]] = defaultdict(list)
+    for row in db_out:
+        story_articles[row[0]].append(ArticleRow(*row[1:]))
+    db_out = db.run_sql(
+        f"""
+        select s.id, i.*
+        from stories s
+        left join images i
+        on s.id = i.story_id
+        where s.digest_id = {digest_id}
+        """
+    )
+    story_images: dict[int, list[ImageRow]] = defaultdict(list)
+    for row in db_out:
+        story_images[row[0]].append(ImageRow(*row[1:]))
 
-        if article.image_urls:
-            article.image_urls = eval(article.image_urls)
-        if story.id in story_articles:
-            story_articles[story.id].append(article)
-        else:
-            story_articles[story.id] = [article]
-        providers[provider.id] = provider
-        stories[story.id] = story
-
-    story_images: dict[int, list[Image]] = {}
     for story in stories.values():
-        story_images[story.id] = select_image_articles(story_articles[story.id], providers)
         story_articles[story.id] = sorted(story_articles[story.id], key=article_ranking_criterion, reverse=True)
 
     stories_list = []
@@ -146,7 +154,7 @@ async def fetch_stories() -> tuple[list[Story], dict[int, Story]]:
                 )
                 for article in story_articles[story_out.id]
             ],
-            images=story_images[story_out.id],
+            images=[Image(url=image.url) for image in story_images[story_out.id]],
         )
         stories_list.append(story)
         stories_by_id[story_out.id] = story
@@ -160,28 +168,6 @@ def article_ranking_criterion(article: ArticleRow) -> float:
 
 def story_ranking_criterion(story: Story) -> float:
     return story.n_providers * story.n_articles
-
-
-def select_image_articles(articles: list[ArticleRow], providers: dict[int, ProviderRow]) -> list[Image] | None:
-    all_images: list[Image] = []
-    for article in articles:
-        if article.image_urls:
-            all_images.extend(
-                [
-                    Image(
-                        url=image_url,
-                        article_url=article.url,
-                        provider=Provider(
-                            name=providers[article.provider_id].name,
-                            url=providers[article.provider_id].url,
-                            favicon_url=providers[article.provider_id].favicon_url,
-                            country=providers[article.provider_id].country,
-                        ),
-                    )
-                    for image_url in article.image_urls
-                ]
-            )
-    return random.sample(all_images, min(3, len(all_images))) if all_images else None
 
 
 async def fetch_stories_loop():

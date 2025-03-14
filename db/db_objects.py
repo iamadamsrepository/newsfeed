@@ -26,6 +26,18 @@ class ArticleRow:
 
 
 @dataclass
+class ImageRow:
+    id: int
+    story_id: int
+    url: str
+    source_page: str
+    height: int
+    width: int
+    format: str
+    title: str
+
+
+@dataclass
 class StoryRow:
     id: int
     ts: dt.datetime

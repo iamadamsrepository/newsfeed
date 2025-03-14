@@ -89,11 +89,11 @@ def main():
             id serial primary key,
             story_id int not null,
             url text not null,
-            title text not null,
             source_page text not null,
             height int not null,
             width int not null,
-            format text not null
+            format text not null,
+            title text not null
         )
     """
     db.run_sql_no_return(create_providers_table)
