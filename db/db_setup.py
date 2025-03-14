@@ -84,6 +84,18 @@ def main():
             primary key (story_id)
         )
     """
+    create_images_table = """
+        create table if not exists images (
+            id serial primary key,
+            story_id int not null,
+            url text not null,
+            title text not null,
+            source_page text not null,
+            height int not null,
+            width int not null,
+            format text not null
+        )
+    """
     db.run_sql_no_return(create_providers_table)
     db.run_sql_no_return(create_articles_table)
     db.run_sql_no_return(create_article_embeddings_table)
@@ -92,6 +104,7 @@ def main():
     db.run_sql_no_return(create_keywords_table)
     db.run_sql_no_return(create_story_keywords_table)
     db.run_sql_no_return(create_story_embeddings_table)
+    db.run_sql_no_return(create_images_table)
     providers = pd.read_csv("./db/providers.csv")
     for _, row in providers.iterrows():
         provider_exists_query = "select exists(select 1 from providers where name = %s)"
