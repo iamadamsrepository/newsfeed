@@ -3,151 +3,63 @@ import { Link } from "react-router-dom";
 
 import { colors } from "./config";
 
+
 function StoryListItem(props) {
   const story = props.story;
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        padding: "10px",
-        margin: "10px",
-        backgroundColor: colors.grayBlue,
-        borderRadius: "10px",
-        maxHeight: "200px",
-      }}
-    >
-      <Link
-        to={`/story/${story.id}`}
-        style={{
-          textDecoration: "none",
-          color: colors.white,
-          display: "flex",
-          alignItems: "center",
-          width: "100%",
-        }}
-      >
-        {(story?.images?.length > 0) ? (
+    <Link to={`/story/${story.id}`} className="flex flex-row m-2">
+      {story?.images?.length > 0 ? (
+        <div className="flex-[1] w-full p-1">
           <img
+            className="rounded-[2vw]"
             src={story.images[0].url}
             alt={story.title}
-            style={{
-              width: "auto",
-              maxWidth: "250px",
-              height: "auto",
-              maxHeight: "200px",
-              borderRadius: "10px",
-              marginRight: "10px",
-            }}
           />
-        ) : (
-          <img
-            src="logo.png"
-            alt="logo"
-            style={{
-              width: "auto",
-              height: "200px",
-              borderRadius: "10px",
-              marginRight: "10px",
-            }}
-          />
-        )}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            height: "200px",
-            minHeight: "100%",
-            maxHeight: "100%",
-            position: "relative",
-          }}
-        >
-          <p
-            style={{
-              color: colors.blue,
-              fontSize: "11px",
-              position: "absolute",
-              top: "0px",
-              left: "0px",
-            }}
-          >
-            From {story.n_articles} Sources
-          </p>
-          <h3>{story.title}</h3>
         </div>
-      </Link>
-    </div>
-  );
+
+      ) : (
+        <img
+          src="logo.png"
+          alt="logo"
+        />
+      )}
+      <div className="flex-[1] md:flex-[2] w-full ml-0 mt-0 md:ml-6 md:mt-6">
+        <div className="text-[9px] md:text-[10px] text-myblue">From {story.n_articles} Sources</div>
+        <div className="text-sm h-full place-content-center pb-10">
+          <div>{story.title}</div>
+        </div>
+      </div>
+    </Link>
+  )
 }
 
 function LeadStoryListItem(props) {
   const story = props.story;
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        padding: "10px",
-        margin: "10px",
-        backgroundColor: colors.grayRed,
-        borderRadius: "10px",
-        position: "relative",
-        height: "400px",
-      }}
-    >
-      <Link
-        to={`/story/${story.id}`}
-        style={{
-          textDecoration: "none",
-          color: colors.white,
-          display: "flex",
-          alignItems: "center",
-          width: "100%",
-        }}
-      >
-        <p
-          style={{
-            color: colors.blue,
-            fontSize: "11px",
-            position: "absolute",
-            top: "10px",
-            left: "10px",
-          }}
-        >
-          From {story.n_articles} Sources
-        </p>
-        <div>
-          <h1 style={{ color: colors.red }}>{story.title}</h1>
+    <div className="bg-mydarkRed p-3 rounded-[2vw]">
+      <div className="pb-2 text-[20px] md:text-[30px]">Top Story</div>
+      <Link to={`/story/${story.id}`} className="flex flex-col md:flex-row">
+        <div className="md:flex-[1] w-full">
+          <div className="text-[9px] md:text-[10px] text-myblue">From {story.n_articles} Sources</div>
+          <div className="h-full place-content-center">
+            <div>{story.title}</div>
+          </div>
         </div>
-        {(story?.images?.length > 0) ? (
+        {story?.images?.length > 0 ? (
           <img
+            className="md:flex-[1] w-full rounded-[2vw]"
             src={story.images[0].url}
             alt={story.title}
-            style={{
-              width: "auto",
-              maxWidth: "600px",
-              height: "auto",
-              maxHeight: "400px",
-              borderRadius: "10px",
-              marginRight: "10px",
-            }}
           />
         ) : (
           <img
             src="logo.png"
             alt="logo"
-            style={{
-              width: "auto",
-              height: "400px",
-              borderRadius: "10px",
-              marginRight: "10px",
-            }}
           />
         )}
       </Link>
     </div>
-  );
+  )
 }
 
 export default function StoryItems(props) {
@@ -166,11 +78,10 @@ export default function StoryItems(props) {
         style={{
           padding: "5px",
           outline: "0px solid #FFFFFF",
-          margin: "20px",
-          backgroundColor: "rgba(0, 0, 0, 0.1)",
         }}
+        className="m-[10px] md:m-[40px]"
       >
-        <h2>Daily Digest</h2>
+        <div className="text-[30px] md:text-[40px] mb-2 md:mb-6">Daily Digest</div>
         {stories.length > 0 ? (
           <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
             {stories.map((story, index) => (

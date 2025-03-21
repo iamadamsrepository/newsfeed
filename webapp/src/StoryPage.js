@@ -6,48 +6,11 @@ function StoryImage(props) {
   const image = props.image;
   if (!image) return <div>No image available</div>;
   const image_url = image.url;
-  const image_favicon = image.provider.favicon_url;
-  const image_article_url = image.article_url;
   if (!image_url) return <div>No image URL available</div>;
-  if (!image_favicon) return <div>No favicon available</div>;
-  if (!image_article_url) return <div>No article URL available</div>;
 
   return (
-    <div style={{ display: "flex", justifyContent: "center" }}>
-      <a
-        href={image_article_url}
-        target="_blank"
-        rel="noopener noreferrer"
-        key={image_article_url}
-        style={{
-          display: "inline-block",
-          margin: "10px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            position: "relative",
-            width: "fit-content",
-          }}
-        >
-          <img src={image_url} alt={image_url} style={{ height: "200px" }} />
-          <img
-            src={image_favicon}
-            alt="favicon"
-            style={{
-              position: "absolute",
-              top: "0px",
-              left: "0px",
-              width: "40px",
-              height: "40px",
-              opacity: 0.5,
-            }}
-            className="favicon-overlay"
-          />
-        </div>
-      </a>
+    <div style={{ display: "flex", justifyContent: "center", margin: "10px" }}>
+        <img src={image_url} alt={image_url} style={{ height: "200px" }} />
     </div>
   );
 }
@@ -209,22 +172,25 @@ export default function StoryPage() {
       style={{
         padding: "5px",
         outline: "0px solid #FFFFFF",
-        margin: "20px",
-        backgroundColor: "rgba(0, 0, 0, 0.1)",
+        // margin: "20px",
+        // backgroundColor: "rgba(0, 0, 0, 0.1)",
       }}
+      className="m-[10px] md:m-[40px]"
     >
-      <div style={{ display: "flex" }}>
-        <div style={{ flex: 2 }}>
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="md:flex-[2] w-full">
           {story ? (
             <div>
-              <h1 style={{ margin: "10px" }}>{story.title}</h1>
+              <h1 className="mb-2 text-2xl font-bold">{story.title}</h1>
               {story_items}
             </div>
           ) : (
-            <div>Loading...</div>
+            <div className="m-4">Loading...</div>
           )}
         </div>
-        <div style={{ flex: 1 }}>{coverage_section}</div>
+        <div className="md:flex-[1] w-full">
+          {coverage_section}
+        </div>
       </div>
       <div>
         <h3>{story.articles.length} Articles</h3>
