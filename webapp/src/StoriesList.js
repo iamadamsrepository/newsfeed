@@ -7,29 +7,32 @@ import { colors } from "./config";
 function StoryListItem(props) {
   const story = props.story;
   return (
-    <Link to={`/story/${story.id}`} className="flex flex-row m-2">
-      {story?.images?.length > 0 ? (
-        <div className="flex-[1] w-full p-1">
-          <img
-            className="rounded-[2vw]"
-            src={story.images[0].url}
-            alt={story.title}
-          />
-        </div>
+    <div>
+      <Link to={`/story/${story.id}`} className="flex flex-row m-2">
+        {story?.images?.length > 0 ? (
+          <div className="flex-[1] w-full p-1">
+            <img
+              className="rounded-[2vw]"
+              src={story.images[0].url}
+              alt={story.title}
+            />
+          </div>
 
-      ) : (
-        <img
-          src="logo.png"
-          alt="logo"
-        />
-      )}
-      <div className="flex-[1] md:flex-[2] w-full ml-0 mt-0 md:ml-6 md:mt-6">
-        <div className="text-[9px] md:text-[10px] text-myblue">From {story.n_articles} Sources</div>
-        <div className="text-sm h-full place-content-center pb-10">
-          <div>{story.title}</div>
+        ) : (
+          <img
+            src="logo.png"
+            alt="logo"
+          />
+        )}
+        <div className="flex-[1] md:flex-[2] w-full ml-0 mt-0 md:ml-6 md:mt-6">
+          <div className="text-[9px] md:text-[10px] text-myblue">From {story.n_articles} Sources</div>
+          <div className="text-sm h-full place-content-center pb-10">
+            <div>{story.title}</div>
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+      <div className="border-t border-myblue ml-4 mr-4 md:ml-10 md:mr-10"></div>
+    </div>
   )
 }
 
@@ -37,17 +40,17 @@ function LeadStoryListItem(props) {
   const story = props.story;
   return (
     <div className="bg-mydarkRed p-3 rounded-[2vw]">
-      <div className="pb-2 text-[20px] md:text-[30px]">Top Story</div>
+      <div className="pb-2 text-[20px] md:text-[30px] ml-1 mt-1 md:ml-3 md:mt-3">Top Story</div>
       <Link to={`/story/${story.id}`} className="flex flex-col md:flex-row">
         <div className="md:flex-[1] w-full">
-          <div className="text-[9px] md:text-[10px] text-myblue">From {story.n_articles} Sources</div>
-          <div className="h-full place-content-center">
+          <div className="text-[9px] md:text-[10px] text-myblue mt-2 md:mt-8">From {story.n_articles} Sources</div>
+          <div className="h-full place-content-center mb-2">
             <div>{story.title}</div>
           </div>
         </div>
         {story?.images?.length > 0 ? (
           <img
-            className="md:flex-[1] w-full rounded-[2vw]"
+            className="md:flex-[1] w-full max-h-[400px] rounded-[2vw]"
             src={story.images[0].url}
             alt={story.title}
           />
