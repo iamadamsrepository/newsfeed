@@ -24,3 +24,5 @@ config.json
 config.json
 
 collection_results_*
+
+.DS_Store
