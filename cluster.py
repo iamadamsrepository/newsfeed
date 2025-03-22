@@ -238,4 +238,4 @@ def cluster_articles(db_config: dict, client: OpenAI, dry_run=False):
 if __name__ == "__main__":
     config = json.load(open("./config.json"))
     client = OpenAI(api_key=config["openai_api_key"])
-    cluster_articles(config["pi"], client, dry_run=False)
+    cluster_articles(config["railway"], client, dry_run=False)

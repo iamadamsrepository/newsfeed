@@ -66,7 +66,7 @@ class ImageGuy:
 
 if __name__ == "__main__":
     config = json.load(open("config.json"))
-    db_config = config["pi"]
+    db_config = config["railway"]
     db = DBHandler(db_config)
     g_key = config["google_search_key"]
     g_id = config["google_search_engine_id"]

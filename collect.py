@@ -156,7 +156,8 @@ class Collector:
         else:
             ts = article.publish_date.replace(tzinfo=timezone).astimezone(ZoneInfo("UTC"))
         image_urls = {self._format_url(url) for url in article.images[:8]}
-        image_urls = [i for i in image_urls if self._check_image(i)]
+        # image_urls = [i for i in image_urls if self._check_image(i)]
+        image_urls = []
         return {
             "provider_id": provider.id,
             "date": date,
@@ -269,6 +270,6 @@ class Collector:
 
 if __name__ == "__main__":
     config = json.load(open("./config.json"))
-    db = DBHandler(config["pi"])
+    db = DBHandler(config["railway"])
     collector = Collector(db)
     collector.collect()

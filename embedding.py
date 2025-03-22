@@ -62,6 +62,6 @@ def embed_stories(db_config: dict, client: OpenAI):
 
 if __name__ == "__main__":
     client = OpenAI(api_key=json.load(open("./config.json"))["openai_api_key"])
-    config = json.load(open("./config.json"))["pi"]
+    config = json.load(open("./config.json"))["railway"]
     embed_articles(config, client)
     embed_stories(config, client)
