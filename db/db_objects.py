@@ -46,3 +46,10 @@ class StoryRow:
     coverage: str
     digest_id: int
     digest_description: str
+
+
+@dataclass
+class DigestRundownRow:
+    digest_id: int
+    rundown_type: str
+    rundown: str

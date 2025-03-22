@@ -5,7 +5,7 @@ from db_connection import DBHandler
 
 
 def main():
-    config = json.load(open("./db/config.json"))["pi"]
+    config = json.load(open("./config.json"))["railway"]
     db = DBHandler(config)
     create_articles_table = """
         create table if not exists articles (
@@ -18,7 +18,7 @@ def main():
             body text not null,
             image_url text,
             image_urls text,
-            dt date,
+            date date,
             constraint fk_provider_id foreign key (provider_id) references providers(id)
         )
     """
@@ -55,8 +55,7 @@ def main():
             name text not null,
             url text not null,
             favicon_url text not null,
-            country text not null,
-            tz text not null
+            country text not null
         )
     """
     create_keywords_table = """
@@ -93,9 +92,19 @@ def main():
             height int not null,
             width int not null,
             format text not null,
-            title text not null
+            title text not null,
+            constraint fk_story_id foreign key (story_id) references stories(id)
         )
     """
+    create_digest_rundowns_table = """ 
+        create table if not exists digest_rundowns (
+            digest_id int,
+            rundown_type text,
+            rundown text,
+            primary key (digest_id, rundown_type)
+        )
+    """
+
     db.run_sql_no_return(create_providers_table)
     db.run_sql_no_return(create_articles_table)
     db.run_sql_no_return(create_article_embeddings_table)
@@ -105,13 +114,14 @@ def main():
     db.run_sql_no_return(create_story_keywords_table)
     db.run_sql_no_return(create_story_embeddings_table)
     db.run_sql_no_return(create_images_table)
+    db.run_sql_no_return(create_digest_rundowns_table)
     providers = pd.read_csv("./db/providers.csv")
     for _, row in providers.iterrows():
         provider_exists_query = "select exists(select 1 from providers where name = %s)"
         provider_exists = db.run_sql(provider_exists_query, (row["name"],))
         if not provider_exists[0][0]:
             db.insert_row("providers", dict(row))
-    ...
+    main()
 
 
 if __name__ == "__main__":
