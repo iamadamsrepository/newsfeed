@@ -33,15 +33,22 @@ class DBHandler:
             logger.error(e)
             raise e
 
-    def run_sql_no_return(self, sql: str, vars: Optional[Union[dict, tuple]] = None):
+    def run_sql_no_return(self, sql: str, vars: Optional[Union[dict, tuple]] = None, unique_okay=True):
         try:
             with self.conn.cursor() as c:
                 c = self.conn.cursor()
-                c.execute(sql + ";", vars)
+                c.execute(";" + sql + ";", vars)
                 self.conn.commit()
+        except psycopg2.errors.UniqueViolation as e:
+            if unique_okay:
+                logger.warning(e)
+                self.conn.rollback()
+            else:
+                logger.error(e)
+                raise
         except Exception as e:
             logger.error(e)
-            raise e
+            raise
 
     def insert_row(self, table: str, row_dict: dict):
         query = f"""
