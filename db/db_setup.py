@@ -96,6 +96,12 @@ def main():
             constraint fk_story_id foreign key (story_id) references stories(id)
         )
     """
+    create_digests_table = """
+        create table if not exists digests (
+            id int primary key,
+            ts timestamp
+        )
+    """
     create_digest_rundowns_table = """ 
         create table if not exists digest_rundowns (
             digest_id int,
@@ -114,6 +120,7 @@ def main():
     db.run_sql_no_return(create_story_keywords_table)
     db.run_sql_no_return(create_story_embeddings_table)
     db.run_sql_no_return(create_images_table)
+    db.run_sql_no_return(create_digests_table)
     db.run_sql_no_return(create_digest_rundowns_table)
     providers = pd.read_csv("./db/providers.csv")
     for _, row in providers.iterrows():

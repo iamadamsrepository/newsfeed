@@ -1,3 +1,4 @@
+import datetime as dt
 import json
 from dataclasses import asdict
 
@@ -97,6 +98,7 @@ def process_latest_digest(db: DBHandler, openai: OpenAI, dry_run=False):
         for i, row in enumerate(digest_rundown_rows):
             print(f"inserting row {i}", end="\r")
             db.insert_row("digest_rundowns", asdict(row))
+        db.insert_row("digests", {"id": latest_digest_id, "ts": dt.datetime.now(dt.timezone.utc)})
     else:
         print("Dry run, not inserting rows")
     print("Done processing latest digest")
