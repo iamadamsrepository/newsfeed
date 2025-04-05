@@ -110,6 +110,48 @@ def main():
             primary key (digest_id, rundown_type)
         )
     """
+    create_timelines_table = """
+        create table if not exists timelines (
+            id serial primary key,
+            digest_id int not null,
+            ts timestamp,
+            subject text not null,
+            headline text not null,
+            summary text not null,
+            constraint fk_digest_id foreign key (digest_id) references digests(id),
+            constraint unique_timeline unique (digest_id, subject)
+        )
+    """
+    create_timeline_events_table = """
+        create table if not exists timeline_events (
+            timeline_id int not null,
+            story_id int not null,
+            description text not null,
+            date date not null,
+            date_type text not null,
+            constraint fk_timeline_id foreign key (timeline_id) references timelines(id),
+            constraint fk_story_id foreign key (story_id) references stories(id),
+            primary key (timeline_id, description)
+        )
+    """
+    create_timeline_stories_table = """
+        create table if not exists timeline_stories (
+            timeline_id int not null,
+            story_id int not null,
+            constraint fk_timeline_id foreign key (timeline_id) references timelines(id),
+            constraint fk_story_id foreign key (story_id) references stories(id),
+            primary key (timeline_id, story_id)
+        )
+    """
+    create_timeline_keywords_table = """
+        create table if not exists timeline_keywords (
+            timeline_id int not null,
+            keyword_id int not null,
+            constraint fk_timeline_id foreign key (timeline_id) references timelines(id),
+            constraint fk_keyword_id foreign key (keyword_id) references keywords(id),
+            primary key (timeline_id, keyword_id)
+        )
+    """
 
     db.run_sql_no_return(create_providers_table)
     db.run_sql_no_return(create_articles_table)
@@ -122,13 +164,19 @@ def main():
     db.run_sql_no_return(create_images_table)
     db.run_sql_no_return(create_digests_table)
     db.run_sql_no_return(create_digest_rundowns_table)
+    db.run_sql_no_return(create_timelines_table)
+    db.run_sql_no_return(create_timeline_events_table)
+    db.run_sql_no_return(create_timeline_stories_table)
+    db.run_sql_no_return(create_timeline_keywords_table)
+    print("Created tables")
     providers = pd.read_csv("./db/providers.csv")
     for _, row in providers.iterrows():
         provider_exists_query = "select exists(select 1 from providers where name = %s)"
         provider_exists = db.run_sql(provider_exists_query, (row["name"],))
         if not provider_exists[0][0]:
             db.insert_row("providers", dict(row))
-    main()
+            print(f"Inserted provider {row['name']}")
+    print("Done")
 
 
 if __name__ == "__main__":
