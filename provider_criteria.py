@@ -29,6 +29,7 @@ def check_article(provider_name: str, article: Article) -> bool:
 
 
 provider_criteria: Dict[str, Dict[str, Set[str]]] = {
+    "9 News": {"whitelist_categories": {"national", "world"}},
     "ABC News": {"blacklist_categories": {"everyday"}},
     "Al Jazeera": {"blacklist_categories": {"balkans", "liveblog", "sports"}},
     "BBC News": {"blacklist_categories": {"culture", "live", "reel", "travel", "videos"}},
@@ -55,6 +56,7 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
     "DW": {"blacklist_categories": set()},
     "EuroNews": {"blacklist_categories": {"culture", "green", "tag", "travel", "video"}},
     "Financial Review": {"blacklist_categories": {"life-and-luxury", "topic"}},
+    "Forbes": {"blacklist_categories": {"video", "forbesvideo", "forbes-research"}, "whitelist_categories": {"sites"}},
     "France24": {
         "blacklist_categories": {"archives", "live-news", "sponsored-content", "sport", "tv-shows", "video"},
         "whitelist_categories": set(),
@@ -83,6 +85,8 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
         "whitelist_categories": {"world-news"},
     },
     "MSNBC": {"blacklist_categories": set()},
+    "news.com.au": {"whitelist_categories": {"breaking-news", "finance", "national", "technology", "world"}},
+    "News 18": {"whitelist_categories": {"business", "elections", "india", "politics", "tech", "world"}},
     "NPR": {"blacklist_categories": {"podcasts", "sections", "series", "transcripts"}},
     "SBS News": {"blacklist_categories": {"audio", "food", "sport", "whats-on", "language"}},
     "Sky News Australia": {
@@ -91,6 +95,7 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
     },
     "The Age": {"blacklist_categories": {"culture", "goodfood", "living", "property", "sport"}},
     "The Associated Press": {"whitelist_categories": {"article"}},
+    "The Canberra Times": {"whitelist_categories": {"story"}},
     "The Economist": {"blacklist_categories": set()},
     "The Globe and Mail": {
         "blacklist_categories": {"arts", "drive", "life", "podcast", "real-estate", "sports", "standards-editor"}
@@ -114,6 +119,7 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
             "video",
         }
     },
+    "The Independent": {"whiteliest_categories": {"news"}},
     "The New York Times": {
         "blacklist_categories": {
             "arts",
@@ -161,6 +167,7 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
             "travel",
         }
     },
+    # "The Times of India": {}
     "The Washington Post": {
         "blacklist_categories": {
             "advice",
@@ -179,5 +186,5 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
             "wellness",
         }
     },
-    "9 News": {"blacklist_categories": {"motorsport", "nrl", "olympics"}},
+    "Yahoo News": {"whitelist_categories": {"news"}},
 }
