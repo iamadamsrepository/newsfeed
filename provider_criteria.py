@@ -53,7 +53,7 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
         },
         "whitelist_categories": {"cnn"},
     },
-    "DW": {"blacklist_categories": set()},
+    "DW": {"blacklist_categories": {"top-stories", "corporate", "akademie"}, "whitelist_categories": {"dw"}},
     "EuroNews": {"blacklist_categories": {"culture", "green", "tag", "travel", "video"}},
     "Financial Review": {"blacklist_categories": {"life-and-luxury", "topic"}},
     "Forbes": {"blacklist_categories": {"video", "forbesvideo", "forbes-research"}, "whitelist_categories": {"sites"}},
@@ -80,6 +80,10 @@ provider_criteria: Dict[str, Dict[str, Set[str]]] = {
             "iheart",
             "outkick",
         }
+    },
+    "Japan Today": {
+        "whitelist_categories": {"japantoday"},
+        "blacklist_cateogories": {"sports", "quote-of-the-day", "have-your-say", "features", "entertainment"},
     },
     "Hindustan Times": {
         "whitelist_categories": {"world-news"},
