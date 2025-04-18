@@ -30,6 +30,8 @@ TIMEZONES = {
     "India": "Asia/Kolkata",
     "Qatar": "Asia/Qatar",
     "The Associated Press": "Australia/Sydney",
+    "Japan": "Asia/Tokyo",
+    "Germany": "Europe/Berlin",
 }
 TIMEZONES: dict[str, ZoneInfo] = {k: ZoneInfo(v) for k, v in TIMEZONES.items()}
 
