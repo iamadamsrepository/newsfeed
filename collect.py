@@ -227,14 +227,14 @@ class Collector:
 
         for provider, source in sources.items():
             self._format_source_article_urls(source)
-            source.articles = [article for article in source.articles if article.url not in article_urls]
-            results[provider]["new_articles"] = len(source.articles)
-        print(f"Filtered existing articles, {sum(len(source.articles) for source in sources.values())} remaining")
-
-        for provider, source in sources.items():
             source.articles = [article for article in source.articles if check_article(provider, article)]
             results[provider]["accepted_articles"] = len(source.articles)
         print(f"Filtered by black/white lists, {sum(len(source.articles) for source in sources.values())} remaining")
+
+        for provider, source in sources.items():
+            source.articles = [article for article in source.articles if article.url not in article_urls]
+            results[provider]["new_articles"] = len(source.articles)
+        print(f"Filtered existing articles, {sum(len(source.articles) for source in sources.values())} remaining")
 
         print(f"Downloading {sum(len(source.articles) for source in sources.values())} articles")
         self._download_articles(sources)
