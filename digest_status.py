@@ -15,20 +15,24 @@ class DigestStatus(Enum):
     READY = "READY"
 
 
-def add_digest_row(db: DBHandler) -> int:
+def add_digest_row(db: DBHandler, verbose: bool = True) -> int:
     """
     Create a new digest with the status "CREATED" and the current timestamp.
     """
     digest_id = (d if (d := db.run_sql("select max(digest_id) from stories")[0][0]) is not None else -1) + 1
     db.insert_row("digests", {"id": digest_id, "status": DigestStatus.CREATED, "ts": dt.datetime.now(dt.timezone.utc)})
+    if verbose:
+        print(f"Created new digest with id {digest_id} and status {DigestStatus.CREATED}")
     return digest_id
 
 
-def set_digest_status(db: DBHandler, digest_id: int, status: DigestStatus):
+def set_digest_status(db: DBHandler, digest_id: int, status: DigestStatus, verbose: bool = True) -> None:
     """
     Set the status of a digest to one of the predefined statuses.
     """
     db.run_sql_no_return("update digests set status = %s where id = %s", (status, digest_id))
+    if verbose:
+        print(f"Set digest {digest_id} status to {status}")
 
 
 def get_digest_status(db: DBHandler, digest_id: int) -> DigestStatus:
