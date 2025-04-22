@@ -99,7 +99,8 @@ def main():
     create_digests_table = """
         create table if not exists digests (
             id int primary key,
-            ts timestamp
+            ts timestamp not null,
+            status text not null
         )
     """
     create_digest_rundowns_table = """ 
