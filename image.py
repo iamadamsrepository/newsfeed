@@ -3,6 +3,7 @@ import json
 from googleapiclient.discovery import Resource, build
 
 from db.db_connection import DBHandler
+from digest_status import DigestStatus, digest_status_transition
 
 
 class ImageGuy:
@@ -54,7 +55,7 @@ class ImageGuy:
             results.append(image_info)
         return results
 
-    def _collect_images(self):
+    def collect_images(self):
         stories = self._get_stories_without_images()
         print(f"Collectings images for {len(stories)} stories")
         for i, story in enumerate(stories):
@@ -64,11 +65,19 @@ class ImageGuy:
                 self._db.insert_row("images", {"story_id": story["id"], **img})
 
 
+@digest_status_transition(
+    expected_status=DigestStatus.STORIES_EMBEDDED,
+    final_status=DigestStatus.IMAGES_COLLECTED,
+)
+def run(db_config: dict, g_key: str, g_id: str):
+    db = DBHandler(db_config)
+    ig = ImageGuy(db, g_key, g_id)
+    ig.collect_images()
+
+
 if __name__ == "__main__":
     config = json.load(open("config.json"))
     db_config = config["railway"]
-    db = DBHandler(db_config)
     g_key = config["google_search_key"]
     g_id = config["google_search_engine_id"]
-    ig = ImageGuy(db, g_key, g_id)
-    ig._collect_images()
+    run(db_config, g_key, g_id)

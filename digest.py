@@ -1,4 +1,3 @@
-import datetime as dt
 import json
 from dataclasses import asdict
 
@@ -7,6 +6,7 @@ from openai.types.chat.chat_completion import ChatCompletion
 
 from db.db_connection import DBHandler
 from db.db_objects import DigestRundownRow, StoryRow
+from digest_status import DigestStatus, digest_status_transition, get_incomplete_digest
 
 RUNDOWN_TYPES = {
     "Daily News": "Up to 200 words to summarise the most important stories and information from todays news stories.",
@@ -82,9 +82,13 @@ def print_digest_rundowns(digest_descriptin: str, digest_rundown_rows: list[Dige
         print(row.rundown)
 
 
+@digest_status_transition(
+    expected_status=DigestStatus.IMAGES_COLLECTED,
+    final_status=DigestStatus.RUNDOWNS_GENERATED,
+)
 def process_latest_digest(db: DBHandler, openai: OpenAI, dry_run=False):
     print("Processing latest digest")
-    latest_digest_id = db.run_sql("select max(digest_id) from stories")[0][0]
+    latest_digest_id, _ = get_incomplete_digest(db)
     digest_stories: list[StoryRow] = list(
         map(lambda i: StoryRow(*i), db.run_sql(f"select * from stories where digest_id = {latest_digest_id}"))
     )
@@ -98,7 +102,6 @@ def process_latest_digest(db: DBHandler, openai: OpenAI, dry_run=False):
         for i, row in enumerate(digest_rundown_rows):
             print(f"inserting row {i}", end="\r")
             db.insert_row("digest_rundowns", asdict(row))
-        db.insert_row("digests", {"id": latest_digest_id, "ts": dt.datetime.now(dt.timezone.utc)})
     else:
         print("Dry run, not inserting rows")
     print("Done processing latest digest")

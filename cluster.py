@@ -12,6 +12,7 @@ from openai import OpenAI
 from openai.types.chat.chat_completion import ChatCompletion
 
 from db.db_connection import DBHandler
+from digest_status import DigestStatus, digest_status_transition
 
 ArticleInfo = namedtuple(
     "ArticleInfo", ["id", "url", "ts", "title", "subtitle", "body", "provider", "country", "embedding"]
@@ -218,12 +219,19 @@ def print_stories_breakdown(stories: List[List[ArticleInfo]]):
         )
 
 
+@digest_status_transition(
+    expected_status=DigestStatus.ARTICLES_EMBEDDED,
+    final_status=DigestStatus.STORIES_GENERATED,
+)
 def cluster_articles(db_config: dict, client: OpenAI, dry_run=False):
     db = DBHandler(db_config)
     articles = get_article_embeddings(db)
     stories = cluster_into_stories(articles)
     print_stories_breakdown(stories)
 
+    if dry_run:
+        print("Dry run, not writing to DB")
+        return
     digest_id = (d if (d := db.run_sql("select max(digest_id) from stories")[0][0]) is not None else -1) + 1
     digest_description = dt.date.today().strftime(f"%Y%m%d-{digest_id}")
     for articles in stories:
@@ -232,7 +240,6 @@ def cluster_articles(db_config: dict, client: OpenAI, dry_run=False):
             db, articles, headline, story_summary, coverage_summary, keywords, digest_id, digest_description
         )
         print_story(articles, headline, story_summary, coverage_summary, keywords)
-        ...
 
 
 if __name__ == "__main__":

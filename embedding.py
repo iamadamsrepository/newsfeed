@@ -1,9 +1,11 @@
+import argparse
 import json
 
 from openai import OpenAI
 
 from db.db_connection import DBHandler
 from db.db_objects import ArticleRow, StoryRow
+from digest_status import DigestStatus, digest_status_transition
 
 
 def get_embedding(text, client: OpenAI, model="text-embedding-3-large"):
@@ -18,6 +20,10 @@ def get_story_embedding(story: StoryRow, client: OpenAI):
     return get_embedding(story.ts.date().isoformat() + "\t" + story.title + "\n" + story.summary, client)
 
 
+@digest_status_transition(
+    expected_status=DigestStatus.ARTICLES_COLLECTED,
+    final_status=DigestStatus.ARTICLES_EMBEDDED,
+)
 def embed_articles(db_config: dict, client: OpenAI):
     db = DBHandler(db_config)
     sql_out = db.run_sql(
@@ -39,6 +45,10 @@ def embed_articles(db_config: dict, client: OpenAI):
         db.insert_row("article_embeddings", {"article_id": article.id, "embedding": str(embedding)})
 
 
+@digest_status_transition(
+    expected_status=DigestStatus.STORIES_GENERATED,
+    final_status=DigestStatus.STORIES_EMBEDDED,
+)
 def embed_stories(db_config: dict, client: OpenAI):
     db = DBHandler(db_config)
     sql_out = db.run_sql(
@@ -63,5 +73,16 @@ def embed_stories(db_config: dict, client: OpenAI):
 if __name__ == "__main__":
     client = OpenAI(api_key=json.load(open("./config.json"))["openai_api_key"])
     config = json.load(open("./config.json"))["railway"]
-    embed_articles(config, client)
-    embed_stories(config, client)
+    parser = argparse.ArgumentParser()
+    modes = ["articles", "stories"]
+    parser.add_argument("--mode", choices=modes, help="Choose whether to embed articles or stories.")
+    args = parser.parse_args()
+    mode = getattr(args, "mode", None)
+    if mode is None or mode not in modes:
+        parser.print_help()
+        exit(1)
+
+    if mode == "articles":
+        embed_articles(config, client)
+    elif mode == "stories":
+        embed_stories(config, client)

@@ -10,6 +10,7 @@ from openai import OpenAI
 from openai.types.chat.chat_completion import ChatCompletion
 
 from db.db_connection import DBHandler
+from digest_status import DigestStatus, digest_status_transition, get_incomplete_digest
 
 StoryInfo = namedtuple("StoryInfo", ["id", "title", "ts", "summary", "coverage", "digest_id", "embedding"])
 
@@ -251,7 +252,8 @@ def generate_timelines(super_stories: List[List[StoryInfo]], client: OpenAI) -> 
 
 def write_timelines_to_db(db: DBHandler, timelines: List[dict]):
     print(f"Inserting {len(timelines)} timelines into db")
-    digest_id = db.run_sql("select max(digest_id) from stories")[0][0]
+    digest_id, _ = get_incomplete_digest(db)
+
     for i, timeline in enumerate(timelines):
         print(i + 1, end="\r")
         db.insert_row(
@@ -289,6 +291,10 @@ def write_timelines_to_db(db: DBHandler, timelines: List[dict]):
             db.insert_row("timeline_keywords", {"timeline_id": timeline_id, "keyword_id": keyword_id})
 
 
+@digest_status_transition(
+    expected_status=DigestStatus.RUNDOWNS_GENERATED,
+    final_status=DigestStatus.READY,
+)
 def cluster_stories_into_timelines(db_config: dict, client: OpenAI, dry_run=False):
     print("Clustering stories into timelines")
     db = DBHandler(db_config)

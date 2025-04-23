@@ -17,6 +17,7 @@ from PIL import Image
 
 from db.db_connection import DBHandler
 from db.db_objects import ProviderRow
+from digest_status import DigestStatus, add_digest_row, set_digest_status
 from provider_criteria import check_article
 
 # as DB table? "Australia", "Australia/Sydney", "AEDT"
@@ -214,6 +215,7 @@ class Collector:
     def collect(self):
         print("Running Collector")
         results = {}
+        digest_id = add_digest_row(self.db)
 
         providers = self._get_providers()
         print(f"Pulled {len(providers)} providers")
@@ -265,8 +267,9 @@ class Collector:
 
         results_df = pd.DataFrame(results).T
         today = dt.date.today().isoformat()
-        results_df.to_csv(f"collection_results_{today}.csv", lineterminator="\n")
+        results_df.to_csv(f"results/collection_results_{today}.csv", lineterminator="\n")
         print(f"Results saved to collection_results_{today}.csv")
+        set_digest_status(self.db, digest_id, DigestStatus.ARTICLES_COLLECTED)
         print("Finished Collector")
 
 
