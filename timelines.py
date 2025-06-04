@@ -93,7 +93,7 @@ SUPER_STORY_TIMELINE_SYSTEM_MESSAGE = {
 }
 
 
-def cluster_criterion(stories: List[StoryInfo]) -> bool:
+def cluster_criterion(stories: List[StoryInfo], current_digest: tuple[int, DigestStatus]) -> bool:
     n_stories = len(stories)
     n_days = len(set(s.ts.date() for s in stories))
     most_recent_story = max(stories, key=lambda s: s.ts)
@@ -120,7 +120,9 @@ def get_story_embeddings(db: DBHandler) -> list[StoryInfo]:
     return [StoryInfo(a[0], a[1], a[2], a[3], a[4], a[5], eval(a[6])) for a in sql_out]
 
 
-def cluster_into_super_stories(stories: List[StoryInfo]) -> List[List[StoryInfo]]:
+def cluster_into_super_stories(
+    stories: List[StoryInfo], current_digest: tuple[int, DigestStatus]
+) -> List[List[StoryInfo]]:
     clusterer = HDBSCAN(min_cluster_size=3, metric="euclidean", cluster_selection_method="eom")
     labels = clusterer.fit_predict([s.embedding for s in stories])
     super_stories: list[list[StoryInfo]] = []
@@ -128,7 +130,7 @@ def cluster_into_super_stories(stories: List[StoryInfo]) -> List[List[StoryInfo]
         cluster_stories = [s for s, label in zip(stories, labels) if label == i]
         if not cluster_stories:
             continue
-        if cluster_criterion(cluster_stories):
+        if cluster_criterion(cluster_stories, current_digest):
             super_stories.append(cluster_stories)
     return super_stories
 
@@ -298,9 +300,14 @@ def write_timelines_to_db(db: DBHandler, timelines: List[dict]):
 def cluster_stories_into_timelines(db_config: dict, client: OpenAI, dry_run=False):
     print("Clustering stories into timelines")
     db = DBHandler(db_config)
+    current_digest = get_incomplete_digest(db)
     stories = get_story_embeddings(db)
-    super_stories = cluster_into_super_stories(stories)
+    super_stories = cluster_into_super_stories(stories, current_digest)
     timelines = generate_timelines(super_stories, client)
+    if dry_run:
+        print(f"Dry run: {len(timelines)} timelines would be written to the database.")
+        return
+    print(f"Writing {len(timelines)} timelines to the database")
     write_timelines_to_db(db, timelines)
     print("Finished clustering stories into timelines")
 
@@ -308,4 +315,4 @@ def cluster_stories_into_timelines(db_config: dict, client: OpenAI, dry_run=Fals
 if __name__ == "__main__":
     config = json.load(open("./config.json"))
     client = OpenAI(api_key=config["openai_api_key"])
-    cluster_stories_into_timelines(config["railway"], client, dry_run=False)
+    cluster_stories_into_timelines(config["railway"], client, dry_run=True)
